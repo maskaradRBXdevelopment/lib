@@ -6076,7 +6076,7 @@ do
 
     Library.Watermark = WatermarkOuter
     Library.WatermarkText = WatermarkLabel
-    -- Library:MakeDraggable(Library.Watermark)
+    Library:MakeDraggable(Library.Watermark)
 
     function Library:SetWatermarkVisibility(Bool)
         Library.Watermark.Visible = Bool
