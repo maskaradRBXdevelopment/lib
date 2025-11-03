@@ -5946,8 +5946,8 @@ do
     local TargetOuter = Library:Create('Frame', {
         AnchorPoint = Vector2.new(0, 0.5);
         BorderColor3 = Color3.new(0, 0, 0);
-        Position = UDim2.new(0, 5, 0.5, 0);
-        Size = UDim2.new(0, 210, 0, 20);
+        Position = UDim2.new(0, 14, 0, 32);
+        Size = UDim2.new(0, 210, 0, 60);
         Visible = false;
         ZIndex = 100;
         Parent = ScreenGui;
@@ -6018,8 +6018,8 @@ end
 do
     local WatermarkOuter = Library:Create('Frame', {
         BorderColor3 = Color3.new(0, 0, 0);
-        Position = UDim2.new(0, 100, 0, -25);
-        Size = UDim2.new(0, 213, 0, 50);
+        Position = UDim2.new(0, 14, 0, 4);
+        Size = UDim2.new(0, 213, 0, 20);
         ZIndex = 200;
         Visible = false;
         Parent = ScreenGui;
