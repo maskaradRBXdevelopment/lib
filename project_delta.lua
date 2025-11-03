@@ -6,6 +6,9 @@ local repo = 'https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/main/
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+local AimbotManager = loadstring(game:HttpGet(repo.. 'addons/AimbotModule.lua'))
+AimbotManager.Load()
+
 
 local Options = Library.Options
 local Toggles = Library.Toggles
@@ -17,7 +20,10 @@ Library.NotifySide = "Left" -- Changes the side of the notifications globaly (Le
 local _Vals = {
     _Ver = 'v2',
     _Branch = 'dev',
-    _Hash = 'github.com/maskaradRBXdevelopment'
+    _Hash = 'github.com/maskaradRBXdevelopment',
+
+	_AimbotAllowed = false,
+
 }
 
 local color_vals = {
@@ -69,6 +75,56 @@ local Tabs = {
 -- except Tabboxes you have to call the functions on a tab (Tabbox:AddTab(name))
 local LeftGroupBox = Tabs.Combat:AddLeftGroupbox('Aimbot')
 
+local aimbot_switch = LeftGroupBox:AddToggle('aimbot_toggle', {
+	Text = 'Enable',
+	Tooltip = 'уверенный геймплей без усилий hade',
+
+	Default = false,
+	Risky = true,
+
+	Callback = function(value)
+		_Vals._AimbotAllowed = value
+	end
+
+})
+
+aimbot_switch:AddKeyPicker('AimbotBind', {
+	Default = 'MB2',
+	Mode = 'Hold',
+	Text = 'Bind',
+
+	Callback = function(value)
+		AimbotManager.Settings.Enabled = value
+	end
+
+})
+
+
+local teamcheck_1 = LeftGroupBox:AddToggle('aimbot_teamcheck', {
+	Text = 'Enable',
+	Tooltip = 'название прочитай хз',
+
+	Default = false,
+	Risky = true,
+
+	Callback = function(value)
+		AimbotManager.Settings.TeamCheck = value
+	end
+
+})
+
+local AliveCheck = LeftGroupBox:AddToggle('aim_AliveCheck', {
+	Text = 'Enable',
+	Tooltip = 'название прочитай хз',
+
+	Default = false,
+	Risky = true,
+
+	Callback = function(value)
+		AimbotManager.Settings.AliveCheck = value
+	end
+
+})
 
 
 -- We can also get our Main tab via the following code:
