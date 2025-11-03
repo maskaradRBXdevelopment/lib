@@ -6076,7 +6076,7 @@ do
 
     Library.Watermark = WatermarkOuter
     Library.WatermarkText = WatermarkLabel
-    Library:MakeDraggable(Library.Watermark)
+    -- Library:MakeDraggable(Library.Watermark)
 
     function Library:SetWatermarkVisibility(Bool)
         Library.Watermark.Visible = Bool
@@ -6086,6 +6086,8 @@ do
         local X, Y = Library:GetTextBounds(Text, Library.Font, 14)
         Library.Watermark.Size = UDim2.new(0, X + 15, 0, (Y * 1.5) + 3)
         Library:SetWatermarkVisibility(true)
+
+        print(WatermarkOuter.Position)
 
         Library.WatermarkText.Text = Text
     end
