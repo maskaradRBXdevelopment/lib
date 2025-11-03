@@ -101,6 +101,13 @@ local function GetTarget()
 	return closestPart
 end
 
+function Aimbot:ChangeSetting(Setting:string, value)
+    Aimbot[Setting]=value
+end
+
+function Aimbot:GetSettings()
+    return Aimbot
+end
 
 local rs = game:GetService("RunService").RenderStepped
 game:GetService("UserInputService").InputBegan:Connect(function(iobj, gp)

@@ -6087,7 +6087,7 @@ do
         Library.Watermark.Size = UDim2.new(0, X + 15, 0, (Y * 1.5) + 3)
         Library:SetWatermarkVisibility(true)
 
-        print(WatermarkOuter.Position)
+     
 
         Library.WatermarkText.Text = Text
     end
