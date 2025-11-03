@@ -5979,7 +5979,7 @@ do
         BackgroundColor3 = 'AccentColor';
     }, true)
 
-    local _KeybindLabel = Library:CreateLabel({
+    local TargetLabel = Library:CreateLabel({
         Size = UDim2.new(1, 0, 0, 20);
         Position = UDim2.fromOffset(5, 2),
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -5995,7 +5995,7 @@ do
         Size = UDim2.new(1, 0, 1, -20);
         Position = UDim2.new(0, 0, 0, 20);
         ZIndex = 1;
-        Parent = KeybindInner;
+        Parent = TargetInner;
     })
 
     Library:Create('UIListLayout', {
