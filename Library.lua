@@ -124,6 +124,9 @@ local Library = {
     KeybindContainer = nil;
     Window = { Holder = nil; Tabs = {}; };
 
+    TargetFrame = nil;
+    TargetInfo = nil;
+
     -- variables --
     VideoLink = "";
     
@@ -5936,6 +5939,79 @@ do
     Library.KeybindFrame = KeybindOuter
     Library.KeybindContainer = KeybindContainer
     Library:MakeDraggable(KeybindOuter)
+end
+
+--// Target UI \\--
+do
+    local TargetOuter = Library:Create('Frame', {
+        AnchorPoint = Vector2.new(0, 0.5);
+        BorderColor3 = Color3.new(0, 0, 0);
+        Position = UDim2.new(0, 5, 0.5, 0);
+        Size = UDim2.new(0, 210, 0, 20);
+        Visible = false;
+        ZIndex = 100;
+        Parent = ScreenGui;
+    })
+
+    local TargetInner = Library:Create('Frame', {
+        BackgroundColor3 = Library.MainColor;
+        BorderColor3 = Library.OutlineColor;
+        BorderMode = Enum.BorderMode.Inset;
+        Size = UDim2.new(1, 0, 1, 0);
+        ZIndex = 101;
+        Parent = TargetOuter;
+    })
+
+    Library:AddToRegistry(TargetInner, {
+        BackgroundColor3 = 'MainColor';
+        BorderColor3 = 'OutlineColor';
+    }, true)
+
+    local ColorFrame = Library:Create('Frame', {
+        BackgroundColor3 = Library.AccentColor;
+        BorderSizePixel = 0;
+        Size = UDim2.new(1, 0, 0, 2);
+        ZIndex = 102;
+        Parent = TargetInner;
+    })
+
+    Library:AddToRegistry(ColorFrame, {
+        BackgroundColor3 = 'AccentColor';
+    }, true)
+
+    local _KeybindLabel = Library:CreateLabel({
+        Size = UDim2.new(1, 0, 0, 20);
+        Position = UDim2.fromOffset(5, 2),
+        TextXAlignment = Enum.TextXAlignment.Left,
+
+        Text = 'Target';
+        ZIndex = 104;
+        Parent = TargetInner;
+    })
+    Library:MakeDraggable(TargetOuter)
+
+    local TargetInfo = Library:Create('Frame', {
+        BackgroundTransparency = 1;
+        Size = UDim2.new(1, 0, 1, -20);
+        Position = UDim2.new(0, 0, 0, 20);
+        ZIndex = 1;
+        Parent = KeybindInner;
+    })
+
+    Library:Create('UIListLayout', {
+        FillDirection = Enum.FillDirection.Vertical;
+        SortOrder = Enum.SortOrder.LayoutOrder;
+        Parent = TargetInfo;
+    })
+
+    Library:Create('UIPadding', {
+        PaddingLeft = UDim.new(0, 5),
+        Parent = TargetInfo,
+    })
+
+    Library.TargetFrame = TargetOuter
+    Library.TargetInfo = TargetInfo
+    Library:MakeDraggable(TargetOuter)
 end
 
 --// Watermark \\--
