@@ -97,20 +97,6 @@ aimbot_switch:AddKeyPicker('AimbotBind', {
 
 })
 
-
-local teamcheck_1 = LeftGroupBox:AddToggle('aimbot_teamcheck', {
-	Text = 'Enable',
-	Tooltip = 'название прочитай хз',
-
-	Default = false,
-	Risky = true,
-
-	Callback = function(value)
-		AimbotManager.Settings.TeamCheck = value
-	end
-
-})
-
 -- We can also get our Main tab via the following code:
 -- local LeftGroupBox = Window.Tabs.Combat:AddLeftGroupbox('Groupbox')
 
