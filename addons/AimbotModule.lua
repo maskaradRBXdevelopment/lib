@@ -122,8 +122,10 @@ game:GetService("UserInputService").InputBegan:Connect(function(iobj, gp)
 		local target
 		local t
 		while Aimbot.Targetting == true do
+            print("Targetting")
 			local cam = workspace.CurrentCamera --account for ar2 which keeps replacing the camera
 			if target then
+              
 				local pos, vis = cam:WorldToViewportPoint(target.Position)
 				if not vis then
 					target = nil

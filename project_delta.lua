@@ -1,3 +1,4 @@
+local HttpService = game:GetService("HttpService")
 -- New example script written by wally
 -- You can suggest changes with a pull request or something
 
@@ -6,12 +7,12 @@ local repo = 'https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/main/
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-local AimbotManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/refs/heads/main/addons/AimbotModule.lua"))
+local AimbotManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/refs/heads/main/addons/AimbotModule.lua"))()
 
 local Options = Library.Options
 local Toggles = Library.Toggles
 
-print(AimbotManager)
+print(AimbotManager.Enabled)
 
 Library.ShowToggleFrameInKeybinds = true -- Make toggle keybinds work inside the keybinds UI (aka adds a toggle to the UI). Good for mobile users (Default value = true)
 Library.ShowCustomCursor = true -- Toggles the Linoria cursor globaly (Default value = true)
@@ -91,7 +92,7 @@ local aimbot_switch = LeftGroupBox:AddToggle('aimbot_toggle', {
 aimbot_switch:AddKeyPicker('AimbotBind', {
 	Default = 'MB2',
 	Mode = 'Hold',
-	Text = 'Bind',
+	Text = 'Target',
 
 	Callback = function(value)
 		AimbotManager.Targetting = value
