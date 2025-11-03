@@ -6,7 +6,9 @@ local Aimbot = {
 
 	Prediction = false,
 	BulletSpeed = 200,
-	Gravity = -196.2
+	Gravity = -196.2,
+
+    Targetting = false
 }
 
 local plr = game:GetService("Players").LocalPlayer
@@ -99,7 +101,7 @@ local function GetTarget()
 	return closestPart
 end
 
-local MouseDown
+
 local rs = game:GetService("RunService").RenderStepped
 game:GetService("UserInputService").InputBegan:Connect(function(iobj, gp)
 	if not Aimbot.Enabled or not GetEnemies or gp then
@@ -109,10 +111,10 @@ game:GetService("UserInputService").InputBegan:Connect(function(iobj, gp)
 		if Validator and not Validator() then
 			return
 		end
-		MouseDown = true
+	
 		local target
 		local t
-		while MouseDown do
+		while Aimbot.Targetting == true do
 			local cam = workspace.CurrentCamera --account for ar2 which keeps replacing the camera
 			if target then
 				local pos, vis = cam:WorldToViewportPoint(target.Position)
@@ -141,13 +143,6 @@ game:GetService("UserInputService").InputBegan:Connect(function(iobj, gp)
 	end
 end)
 
-game:GetService("UserInputService").InputEnded:Connect(function(iobj, gp)
-	if not Aimbot.Enabled then
-		return
-	end
-	if iobj.UserInputType == Enum.UserInputType.MouseButton2 then
-		MouseDown = false
-	end
-end)
+
 
 return Aimbot

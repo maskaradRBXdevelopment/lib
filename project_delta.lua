@@ -7,8 +7,6 @@ local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local AimbotManager = loadstring(game:HttpGet(repo.. 'addons/AimbotModule.lua'))
-AimbotManager.Load()
-
 
 local Options = Library.Options
 local Toggles = Library.Toggles
@@ -83,7 +81,7 @@ local aimbot_switch = LeftGroupBox:AddToggle('aimbot_toggle', {
 	Risky = true,
 
 	Callback = function(value)
-		_Vals._AimbotAllowed = value
+		AimbotManager.Enabled = value
 	end
 
 })
@@ -94,7 +92,7 @@ aimbot_switch:AddKeyPicker('AimbotBind', {
 	Text = 'Bind',
 
 	Callback = function(value)
-		AimbotManager.Settings.Enabled = value
+		AimbotManager.Targetting = value
 	end
 
 })
@@ -112,20 +110,6 @@ local teamcheck_1 = LeftGroupBox:AddToggle('aimbot_teamcheck', {
 	end
 
 })
-
-local AliveCheck = LeftGroupBox:AddToggle('aim_AliveCheck', {
-	Text = 'Enable',
-	Tooltip = 'название прочитай хз',
-
-	Default = false,
-	Risky = true,
-
-	Callback = function(value)
-		AimbotManager.Settings.AliveCheck = value
-	end
-
-})
-
 
 -- We can also get our Main tab via the following code:
 -- local LeftGroupBox = Window.Tabs.Combat:AddLeftGroupbox('Groupbox')
