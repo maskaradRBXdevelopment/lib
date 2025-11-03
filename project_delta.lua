@@ -14,7 +14,7 @@ Library.ShowCustomCursor = true -- Toggles the Linoria cursor globaly (Default v
 Library.NotifySide = "Left" -- Changes the side of the notifications globaly (Left, Right) (Default value = Left)
 
 local _Vals = {
-    _Ver = 'v1',
+    _Ver = 'v2',
     _Branch = 'dev',
     _Hash = 'github.com/maskaradRBXdevelopment'
 }
