@@ -1,4 +1,5 @@
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
 -- New example script written by wally
 -- You can suggest changes with a pull request or something
 
@@ -7,12 +8,29 @@ local repo = 'https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/main/
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-local AimbotManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/refs/heads/main/addons/AimbotModule.lua"))()
+local AimbotManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Aimbot-V3/main/src/Aimbot.lua"))()
+
+
+
+
+AimbotManager.Load()
+AimbotManager.Settings.Enabled = false
+print(HttpService:JSONEncode(AimbotManager.Settings))
+
+
+Library:Notify("delta-hook welcomes you! good day "..Players.LocalPlayer.Name, nil, 4590657391)
+
+local HWID = game:GetService("RbxAnalyticsService"):GetClientId()
+print("HWID COPIED")
+setclipboard(HWID)
+
+local UIDS = {
+	["3624BE93-718F-42EC-B811-09028442F485"] = 0
+}
 
 local Options = Library.Options
 local Toggles = Library.Toggles
 
-print(AimbotManager.Enabled)
 
 Library.ShowToggleFrameInKeybinds = true -- Make toggle keybinds work inside the keybinds UI (aka adds a toggle to the UI). Good for mobile users (Default value = true)
 Library.ShowCustomCursor = true -- Toggles the Linoria cursor globaly (Default value = true)
@@ -20,10 +38,11 @@ Library.NotifySide = "Left" -- Changes the side of the notifications globaly (Le
 
 local _Vals = {
     _Ver = 'v2',
-    _Branch = 'dev',
-    _Hash = 'github.com/maskaradRBXdevelopment',
+    _Branch = 'beta',
+    _Hash = 'russian_spy_ware',
 
 	_AimbotAllowed = false,
+	_AimbotCastMode = 1,
 
 }
 
@@ -36,7 +55,6 @@ local color_vals = {
 
     Text_Color = Color3.new(1,1,1)
 }
-
 
 
 local Window = Library:CreateWindow({
@@ -69,6 +87,7 @@ local Window = Library:CreateWindow({
 local Tabs = {
 	-- Creates a new tab titled Main
 	Combat = Window:AddTab('Combat'),
+	['Visual'] = Window:AddTab('👁️ | Visual'),
 	['UI Settings'] = Window:AddTab('⚙️ | Setting'),
 }
 
@@ -78,13 +97,12 @@ local LeftGroupBox = Tabs.Combat:AddLeftGroupbox('Aimbot')
 
 local aimbot_switch = LeftGroupBox:AddToggle('aimbot_toggle', {
 	Text = 'Enable',
-	Tooltip = 'уверенный геймплей без усилий hade',
+	Tooltip = 'ставь всех раком даже солтера!',
 
 	Default = false,
-	Risky = true,
 
 	Callback = function(value)
-		AimbotManager.Enabled = value
+		AimbotManager.Settings.Enabled = value
 	end
 
 })
@@ -92,13 +110,213 @@ local aimbot_switch = LeftGroupBox:AddToggle('aimbot_toggle', {
 aimbot_switch:AddKeyPicker('AimbotBind', {
 	Default = 'MB2',
 	Mode = 'Hold',
-	Text = 'Target',
+	Text = 'Aimbot',
 
-	Callback = function(value)
-		AimbotManager.Targetting = value
+	ChangedCallback = function(new_key, modifier)
+		AimbotManager.Settings.TriggerKey  = new_key
 	end
 
 })
+
+LeftGroupBox:AddDivider()
+
+local drop_down_hitparts_texts = LeftGroupBox:AddLabel("Lock Part")
+
+drop_down_hitparts_texts:AddDropdown('hitparts', {
+	Values = {'Head', 'HumanoidRootPart'},
+	Default = 1, -- number index of the value / string
+	Multi = false, -- true / false, allows multiple choices to be selected
+
+	Text = 'Lock part',
+	Tooltip = 'куда хуярим босс', -- Information shown when you hover over the dropdown
+	DisabledTooltip = 'лэээ брат добавь хоть что то', -- Information shown when you hover over the dropdown while it's disabled
+
+	Searchable = false, -- true / false, makes the dropdown searchable (great for a long list of values)
+
+	Callback = function(Value)
+		AimbotManager.Settings.LockPart = Options.hitparts.Value
+		_Vals._AimbotCastMode = Value
+	end,
+
+	Disabled = false, -- Will disable the dropdown (true / false)
+	Visible = true, -- Will make the dropdown invisible (true / false)
+})
+
+Options.hitparts:OnChanged(function(Value)
+	AimbotManager.Settings.LockPart = Options.hitparts.Value
+	_Vals._AimbotCastMode = Value
+end)
+--
+local drop_down_lockmodes = LeftGroupBox:AddLabel("Lock mode")
+drop_down_lockmodes:AddDropdown('lockmodes', {
+	Values = {'CFrame', 'mousemoverel'},
+	Default = 1, -- number index of the value / string
+	Multi = false, -- true / false, allows multiple choices to be selected
+
+	Text = 'Lock mode',
+	Tooltip = 'каким способом хуярим босс', -- Information shown when you hover over the dropdown
+	DisabledTooltip = 'лэээ брат добавь хоть что то', -- Information shown when you hover over the dropdown while it's disabled
+
+	Searchable = false, -- true / false, makes the dropdown searchable (great for a long list of values)
+
+	Callback = function(Value)
+		local ind = 1
+
+		for i,v in Options.lockmodes.Values do
+			if v == Value then
+				ind = i
+			end
+		end
+
+		AimbotManager.Settings.LockMode = ind
+	end,
+
+	Disabled = false, -- Will disable the dropdown (true / false)
+	Visible = true, -- Will make the dropdown invisible (true / false)
+})
+
+Options.lockmodes:OnChanged(function(value)
+	local ind = 1
+
+	for i,v in Options.lockmodes.Values do
+		if v == value then
+			ind = i
+		end
+	end
+
+	AimbotManager.Settings.LockMode = ind
+end)
+--
+local aimbot_predict_sw = LeftGroupBox:AddToggle('aimbot_prediction', {
+	Text = 'Prediction',
+	Tooltip = 'movement 200iq prediction',
+
+	Default = false,
+
+	Callback = function(value)
+		
+	end
+
+})
+
+local aimbot_predict_sw_proj = LeftGroupBox:AddToggle('Projectile_Pred', {
+	Text = 'Projectile prediction',
+	Tooltip = 'projectile 400iq prediction',
+
+	Default = false,
+
+	Callback = function(value)
+		
+	end
+
+})
+
+local smoothness_aim = LeftGroupBox:AddSlider("smooth_aim", {
+		Text = "Smoothness",
+		Default = 0,
+		Min = 0,
+		Max = 10,
+		Rounding = 1,
+	})
+
+Options.smooth_aim:OnChanged(function(val)
+	AimbotManager.Settings.Sensitivity = val
+	AimbotManager.Settings.Sensitivity2 = 1+val
+end)
+
+LeftGroupBox:AddDivider()
+
+
+local wall_Check_tg = LeftGroupBox:AddToggle('wallchecktoggle', {
+	Text = 'Wall check',
+	Tooltip = 'legit style (halal) едят с mousemoverel лучше всего',
+
+	Default = false,
+
+	Callback = function(value)
+		AimbotManager.Settings.WallCheck = value
+	end
+
+})
+
+--right
+
+local right_groupBox_combat = Tabs.Combat:AddRightGroupbox('Aimbot')
+local fov_enabled = right_groupBox_combat:AddToggle('fov_toggle',{
+
+	Text = 'FOV',
+	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+	Default = true,
+
+	Callback = function(value)
+		AimbotManager.FOVSettings.Enabled = value
+	end
+}
+
+)
+local fov_visible = right_groupBox_combat:AddToggle('fov_visible',{
+
+	Text = 'Visible',
+	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+	Default = true,
+
+	Callback = function(value)
+		AimbotManager.FOVSettings.Visible = value
+	end
+}
+
+)
+
+local fov_radius = right_groupBox_combat:AddSlider("fov_radius", {
+		Text = "Radius",
+		Default = 45,
+		Min = 0.1,
+		Max = 360,
+		Rounding = 1,
+	})
+
+Options.fov_radius:OnChanged(function(val)
+	AimbotManager.FOVSettings .Radius = val
+end)
+
+local fov_thickness = right_groupBox_combat:AddSlider("fov_thikk", {
+		Text = "Thickness",
+		Default = 1,
+		Min = 0.1,
+		Max = 10,
+		Rounding = 1,
+	})
+
+Options.fov_thikk:OnChanged(function(val)
+	AimbotManager.FOVSettings .Thickness  = val
+end)
+
+local color_label_fov = right_groupBox_combat:AddLabel("FOV Color")
+local color_picker_fov = color_label_fov:AddColorPicker('FOVCOLORPICKER',{
+	Default = Color3.new(1, 1, 1),
+
+	Callback = function(val)
+		
+	end
+})
+
+
+local PlayerESPgroup = Tabs["Visual"]:AddLeftGroupbox("Player ESP")
+
+local esp_toggle = PlayerESPgroup:AddToggle('ESP_TOGGLE',{
+	Text = 'Enabled',
+	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+	Default = true,
+
+	Callback = function(value)
+		
+	end
+})
+
+
 
 -- We can also get our Main tab via the following code:
 -- local LeftGroupBox = Window.Tabs.Combat:AddLeftGroupbox('Groupbox')
@@ -728,12 +946,12 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
 	end;
 
 	if CanDoPing then
-		Library:SetWatermark(('delta-hook | '.._Vals._Ver..'-'.._Vals._Branch..' | '..'%d fps | %d ms'):format(
+		Library:SetWatermark(('delta-hook | '.._Vals._Ver..'-'.._Vals._Branch..' | '..'uid: '..tostring(UIDS[HWID])..' | '..'%d fps | %d ms'):format(
 			math.floor(FPS),
 			GetPing()
 		));
 	else
-		Library:SetWatermark(('delta-hook | '.._Vals._Ver..'-'.._Vals._Branch..' | '..'%d fps'):format(
+		Library:SetWatermark(('delta-hook | '.._Vals._Ver..'-'.._Vals._Branch..' | '..'uid: '..tostring(UIDS[HWID])..' | '..'%d fps'):format(
 			math.floor(FPS)
 		));
 	end
@@ -757,7 +975,8 @@ MenuGroup:AddButton("Unload", function() Library:Unload() end)
 
 
 local visual_connection = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
-
+	AimbotManager.FOVSettings .Color  = Options.FOVCOLORPICKER.Value
+	AimbotManager.FOVSettings .LockedColor  = Options.FOVCOLORPICKER.Value
 end)
 
 Library:OnUnload(function() 
