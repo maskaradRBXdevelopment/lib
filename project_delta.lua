@@ -14,6 +14,8 @@ local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local AimbotManager = loadstring(game:HttpGet(repo .. 'addons/AimbotModule.lua'))()
 local EspManager = loadstring(game:HttpGet(repo .. 'addons/Esp_Lib.lua'))()
 
+print(EspManager.Enabled)
+
 
 
 AimbotManager.Load()
