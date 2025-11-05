@@ -137,7 +137,7 @@ end;
 do -- Initalize
     local ScreenGui = Functions:Create("ScreenGui", {
         Parent = CoreGui,
-        Name = "ESPHolder",
+        Name = "agidmgimhgiamhm",
     });
 
     local DupeCheck = function(plr)
