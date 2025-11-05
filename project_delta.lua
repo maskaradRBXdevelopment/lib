@@ -9,7 +9,7 @@ local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local AimbotManager = loadstring(game:HttpGet(repo .. 'addons/AimbotModule.lua'))()
-
+local EspManager = loadstring(game:HttpGet(repo .. 'addons/Esp_Lib.lua'))()
 
 
 
@@ -312,7 +312,7 @@ local esp_toggle = PlayerESPgroup:AddToggle('ESP_TOGGLE',{
 	Default = true,
 
 	Callback = function(value)
-		
+		EspManager.Players = value
 	end
 })
 
