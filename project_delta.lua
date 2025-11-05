@@ -8,7 +8,7 @@ local repo = 'https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/main/
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-local AimbotManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Aimbot-V3/main/src/Aimbot.lua"))()
+local AimbotManager = loadstring(game:HttpGet(repo .. 'addons/AimbotModule.lua'))()
 
 
 
