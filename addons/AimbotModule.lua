@@ -1,17 +1,12 @@
-local Aimbot = {
-	Enabled = false,
-	VisCheck = false,
-	FOVRange = 200,
-	AimPart = "Head",
+--[[
 
-	Prediction = false,
-	BulletSpeed = 200,
-	Gravity = -196.2,
+	Universal Aimbot Module by Exunys © CC0 1.0 Universal (2023 - 2024)
+	https://github.com/Exunys
 
-    Targetting = false
-}
+]]
 
-local Physics = {}; Physics.__index = Physics; do  
+local Physics = {};
+ Physics.__index = Physics; do  
         function Physics.MovementPrediction(Origin, Destination, DestinationVelocity, ProjectileSpeed)
             local Distance = (Destination - Origin).Magnitude;
             local TimeToHit = (Distance / ProjectileSpeed);
@@ -40,143 +35,400 @@ local Physics = {}; Physics.__index = Physics; do
     end;
 
 
+--// Cache
 
+local game, workspace = game, workspace
+local getrawmetatable, getmetatable, setmetatable, pcall, getgenv, next, tick = getrawmetatable, getmetatable, setmetatable, pcall, getgenv, next, tick
+local Vector2new, Vector3zero, CFramenew, Color3fromRGB, Color3fromHSV, Drawingnew, TweenInfonew = Vector2.new, Vector3.zero, CFrame.new, Color3.fromRGB, Color3.fromHSV, Drawing.new, TweenInfo.new
+local getupvalue, mousemoverel, tablefind, tableremove, stringlower, stringsub, mathclamp = debug.getupvalue, mousemoverel or (Input and Input.MouseMove), table.find, table.remove, string.lower, string.sub, math.clamp
 
-local plr = game:GetService("Players").LocalPlayer
-local mouse = plr:GetMouse()
-local LegoSettings = UserSettings():GetService("UserGameSettings")
+local GameMetatable = getrawmetatable and getrawmetatable(game) or {
+	-- Auxillary functions - if the executor doesn't support "getrawmetatable".
 
-local GetEnemies, Settings
-function Aimbot:Register(...)
-	GetEnemies, Settings = ...
-end
+	__index = function(self, Index)
+		return self[Index]
+	end,
 
-local Validator
-function Aimbot:SetValidator(f)
-	Validator = f
-end
-
-function Aimbot:GetVelocity(target)
-	return target.AssemblyLinearVelocity
-end
-
-function Aimbot:_solveTime(proj_pos, proj_speed, target, gravity)
-	local diff = target - proj_pos;
-	local diffXZ = Vector3.new(diff.x, 0, diff.z);
-	local groundDist = diffXZ.magnitude;
-
-	local speed2 = proj_speed * proj_speed;
-	local speed4 = speed2 * speed2;
-
-	local y = diff.y;
-	local x = groundDist;
-
-	local gx = gravity * x;
-
-	local root = speed4 - gravity * (gravity * x * x + 2 * y * speed2);
-
-	if (root < 0) then return nil end
-
-	root = math.sqrt(root);
-
-	local sol = math.atan2(speed2 - root, gx);
-	local s0 = diffXZ.Unit * math.cos(sol) * proj_speed + Vector3.new(0, 1, 0) * math.sin(sol) * proj_speed;
-	local t = x / (math.cos(sol) * proj_speed);
-
-	return s0, t;
-end
-
-function Aimbot:Predict(startPos, target, speed, grav)
-	if not self.Prediction then
-		return
+	__newindex = function(self, Index, Value)
+		self[Index] = Value
 	end
-	speed = speed or self.BulletSpeed
-	grav = grav or self.Gravity
+}
 
-	local trj, t = self:_solveTime(startPos, speed, target.Position, -grav)
-	if not trj then
-		return
-	end
+local __index = GameMetatable.__index
+local __newindex = GameMetatable.__newindex
 
-	local endPos = target.Position + target.AssemblyLinearVelocity * t
-	local dir = CFrame.new(startPos, endPos).lookVector
-	return endPos, dir, t, trj
+local getrenderproperty, setrenderproperty = getrenderproperty or __index, setrenderproperty or __newindex
+
+local GetService = __index(game, "GetService")
+
+--// Services
+
+local RunService = GetService(game, "RunService")
+local UserInputService = GetService(game, "UserInputService")
+local TweenService = GetService(game, "TweenService")
+local Players = GetService(game, "Players")
+
+--// Service Methods
+
+local LocalPlayer = __index(Players, "LocalPlayer")
+local Camera = __index(workspace, "CurrentCamera")
+
+local FindFirstChild, FindFirstChildOfClass = __index(game, "FindFirstChild"), __index(game, "FindFirstChildOfClass")
+local GetDescendants = __index(game, "GetDescendants")
+local WorldToViewportPoint = __index(Camera, "WorldToViewportPoint")
+local GetPartsObscuringTarget = __index(Camera, "GetPartsObscuringTarget")
+local GetMouseLocation = __index(UserInputService, "GetMouseLocation")
+local GetPlayers = __index(Players, "GetPlayers")
+
+--// Variables
+
+local RequiredDistance, Typing, Running, ServiceConnections, Animation, OriginalSensitivity = 2000, false, false, {}
+local Connect, Disconnect = __index(game, "DescendantAdded").Connect
+
+--[[
+local Degrade = false
+
+do
+	xpcall(function()
+		local TemporaryDrawing = Drawingnew("Line")
+		getrenderproperty = getupvalue(getmetatable(TemporaryDrawing).__index, 4)
+		setrenderproperty = getupvalue(getmetatable(TemporaryDrawing).__newindex, 4)
+		TemporaryDrawing.Remove(TemporaryDrawing)
+	end, function()
+		Degrade, getrenderproperty, setrenderproperty = true, function(Object, Key)
+			return Object[Key]
+		end, function(Object, Key, Value)
+			Object[Key] = Value
+		end
+	end)
+
+	local TemporaryConnection = Connect(__index(game, "DescendantAdded"), function() end)
+	Disconnect = TemporaryConnection.Disconnect
+	Disconnect(TemporaryConnection)
+end
+]]
+
+--// Checking for multiple processes
+
+if ExunysDeveloperAimbot and ExunysDeveloperAimbot.Exit then
+	ExunysDeveloperAimbot:Exit()
 end
 
-local function GetTarget()
-	local cam = workspace.CurrentCamera
-	local closestPart, closestDist
-	for i,v in pairs(GetEnemies()) do
-		if v.Character and v.Character and v.Character:FindFirstChild(Aimbot.AimPart) then
-			local part = v.Character[Aimbot.AimPart]
+--// Environment
 
-			local p, vis = cam:WorldToViewportPoint(part.Position)
-			if vis then
-				local vec = (part.Position - cam.CFrame.p)
-				local ray = Ray.new(cam.CFrame.p, vec.Unit * p.Z)
-				local hit
+getgenv().ExunysDeveloperAimbot = {
+	DeveloperSettings = {
+		UpdateMode = "RenderStepped",
+		TeamCheckOption = "TeamColor",
+		RainbowSpeed = 1 -- Bigger = Slower
+	},
 
-				if Aimbot.VisCheck then
-					hit = workspace:FindPartOnRayWithIgnoreList(ray, {plr.Character, part.Parent, cam})
+	Settings = {
+		Enabled = true,
+
+		TeamCheck = false,
+		AliveCheck = true,
+		WallCheck = false,
+
+		Prediction = false,
+		ProjectilePrediction=true,
+
+		OffsetToMoveDirection = false,
+		OffsetIncrement = 15,
+
+		Sensitivity = 0, -- Animation length (in seconds) before fully locking onto target
+		Sensitivity2 = 3.5, -- mousemoverel Sensitivity
+
+		LockMode = 1, -- 1 = CFrame; 2 = mousemoverel
+		LockPart = "Head", -- Body part to lock on
+
+		TriggerKey = Enum.UserInputType.MouseButton2,
+		Toggle = false
+	},
+
+	FOVSettings = {
+		Enabled = true,
+		Visible = true,
+
+		Radius = 90,
+		NumSides = 60,
+
+		Thickness = 1,
+		Transparency = 1,
+		Filled = false,
+
+		RainbowColor = false,
+		RainbowOutlineColor = false,
+		Color = Color3fromRGB(255, 255, 255),
+		OutlineColor = Color3fromRGB(0, 0, 0),
+		LockedColor = Color3fromRGB(255, 150, 150)
+	},
+
+	Blacklisted = {},
+	FOVCircleOutline = Drawingnew("Circle"),
+	FOVCircle = Drawingnew("Circle")
+}
+
+local Environment = getgenv().ExunysDeveloperAimbot
+
+setrenderproperty(Environment.FOVCircle, "Visible", false)
+setrenderproperty(Environment.FOVCircleOutline, "Visible", false)
+
+--// Core Functions
+
+local FixUsername = function(String)
+	local Result
+
+	for _, Value in next, GetPlayers(Players) do
+		local Name = __index(Value, "Name")
+
+		if stringsub(stringlower(Name), 1, #String) == stringlower(String) then
+			Result = Name
+		end
+	end
+
+	return Result
+end
+
+local GetRainbowColor = function()
+	local RainbowSpeed = Environment.DeveloperSettings.RainbowSpeed
+
+	return Color3fromHSV(tick() % RainbowSpeed / RainbowSpeed, 1, 1)
+end
+
+local ConvertVector = function(Vector)
+	return Vector2new(Vector.X, Vector.Y)
+end
+
+local CancelLock = function()
+	Environment.Locked = nil
+
+	local FOVCircle = Environment.FOVCircle--Degrade and Environment.FOVCircle or Environment.FOVCircle.__OBJECT
+
+	setrenderproperty(FOVCircle, "Color", Environment.FOVSettings.Color)
+	__newindex(UserInputService, "MouseDeltaSensitivity", OriginalSensitivity)
+
+	if Animation then
+		Animation:Cancel()
+	end
+end
+
+local GetClosestPlayer = function()
+	local Settings = Environment.Settings
+	local LockPart = Settings.LockPart
+
+	if not Environment.Locked then
+		RequiredDistance = Environment.FOVSettings.Enabled and Environment.FOVSettings.Radius or 2000
+
+		for _, Value in next, GetPlayers(Players) do
+			local Character = __index(Value, "Character")
+			local Humanoid = Character and FindFirstChildOfClass(Character, "Humanoid")
+
+			if Value ~= LocalPlayer and not tablefind(Environment.Blacklisted, __index(Value, "Name")) and Character and FindFirstChild(Character, LockPart) and Humanoid then
+				local PartPosition, TeamCheckOption = __index(Character[LockPart], "Position"), Environment.DeveloperSettings.TeamCheckOption
+
+				if Settings.TeamCheck and __index(Value, TeamCheckOption) == __index(LocalPlayer, TeamCheckOption) then
+					continue
 				end
-				if not hit and (not Settings.AimDistance or vec.magnitude < Settings.AimDistance) then
-					local dist = (Vector3.new(mouse.X, mouse.Y + 36, 0) - Vector3.new(p.X, p.Y, 0)).magnitude
-					if dist <= (Settings.UsedFOVRange or Settings.FOVRange or Aimbot.FOVRange) and (not closestPart or dist < closestDist) then
-						closestDist = dist
-						closestPart = part
+
+				if Settings.AliveCheck and __index(Humanoid, "Health") <= 0 then
+					continue
+				end
+
+				if Settings.WallCheck then
+					local BlacklistTable = GetDescendants(__index(LocalPlayer, "Character"))
+
+					for _, Value in next, GetDescendants(Character) do
+						BlacklistTable[#BlacklistTable + 1] = Value
 					end
+
+					if #GetPartsObscuringTarget(Camera, {PartPosition}, BlacklistTable) > 0 then
+						continue
+					end
+				end
+
+				local Vector, OnScreen, Distance = WorldToViewportPoint(Camera, PartPosition)
+				Vector = ConvertVector(Vector)
+				Distance = (GetMouseLocation(UserInputService) - Vector).Magnitude
+
+				if Distance < RequiredDistance and OnScreen then
+					RequiredDistance, Environment.Locked = Distance, Value
 				end
 			end
 		end
+	elseif (GetMouseLocation(UserInputService) - ConvertVector(WorldToViewportPoint(Camera, __index(__index(__index(Environment.Locked, "Character"), LockPart), "Position")))).Magnitude > RequiredDistance then
+		CancelLock()
 	end
-	return closestPart
 end
 
+local Load = function()
+	OriginalSensitivity = __index(UserInputService, "MouseDeltaSensitivity")
 
+	local Settings, FOVCircle, FOVCircleOutline, FOVSettings, Offset = Environment.Settings, Environment.FOVCircle, Environment.FOVCircleOutline, Environment.FOVSettings
 
-local rs = game:GetService("RunService").RenderStepped
-game:GetService("UserInputService").InputBegan:Connect(function(iobj, gp)
-	if not Aimbot.Enabled or not GetEnemies or gp then
-		return
+	--[[
+	if not Degrade then
+		FOVCircle, FOVCircleOutline = FOVCircle.__OBJECT, FOVCircleOutline.__OBJECT
 	end
-	if iobj.UserInputType == Enum.UserInputType.MouseButton2 then
-		if Validator and not Validator() then
+	]]
+
+	ServiceConnections.RenderSteppedConnection = Connect(__index(RunService, Environment.DeveloperSettings.UpdateMode), function()
+		local OffsetToMoveDirection, LockPart = Settings.OffsetToMoveDirection, Settings.LockPart
+
+		if FOVSettings.Enabled and Settings.Enabled then
+			for Index, Value in next, FOVSettings do
+				if Index == "Color" then
+					continue
+				end
+
+				if pcall(getrenderproperty, FOVCircle, Index) then
+					setrenderproperty(FOVCircle, Index, Value)
+					setrenderproperty(FOVCircleOutline, Index, Value)
+				end
+			end
+
+			setrenderproperty(FOVCircle, "Color", (Environment.Locked and FOVSettings.LockedColor) or FOVSettings.RainbowColor and GetRainbowColor() or FOVSettings.Color)
+			setrenderproperty(FOVCircleOutline, "Color", FOVSettings.RainbowOutlineColor and GetRainbowColor() or FOVSettings.OutlineColor)
+
+			setrenderproperty(FOVCircleOutline, "Thickness", FOVSettings.Thickness + 1)
+			setrenderproperty(FOVCircle, "Position", GetMouseLocation(UserInputService))
+			setrenderproperty(FOVCircleOutline, "Position", GetMouseLocation(UserInputService))
+		else
+			setrenderproperty(FOVCircle, "Visible", false)
+			setrenderproperty(FOVCircleOutline, "Visible", false)
+		end
+
+		if Running and Settings.Enabled then
+			GetClosestPlayer()
+
+			Offset = OffsetToMoveDirection and __index(FindFirstChildOfClass(__index(Environment.Locked, "Character"), "Humanoid"), "MoveDirection") * (mathclamp(Settings.OffsetIncrement, 1, 30) / 10) or Vector3zero
+
+			if Environment.Locked then
+				local LockedPosition_Vector3 = __index(__index(Environment.Locked, "Character")[LockPart], "Position")
+				local LockedPosition = WorldToViewportPoint(Camera, LockedPosition_Vector3 + Offset)
+
+				if Environment.Settings.LockMode == 2 then
+					mousemoverel((LockedPosition.X - GetMouseLocation(UserInputService).X) / Settings.Sensitivity2, (LockedPosition.Y - GetMouseLocation(UserInputService).Y) / Settings.Sensitivity2)
+				else
+					if Settings.Sensitivity > 0 then
+						Animation = TweenService:Create(Camera, TweenInfonew(Environment.Settings.Sensitivity, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = CFramenew(Camera.CFrame.Position, LockedPosition_Vector3)})
+						Animation:Play()
+					else
+						__newindex(Camera, "CFrame", CFramenew(Camera.CFrame.Position, LockedPosition_Vector3 + Offset))
+					end
+
+					__newindex(UserInputService, "MouseDeltaSensitivity", 0)
+				end
+
+				setrenderproperty(FOVCircle, "Color", FOVSettings.LockedColor)
+			end
+		end
+	end)
+
+	ServiceConnections.InputBeganConnection = Connect(__index(UserInputService, "InputBegan"), function(Input)
+		local TriggerKey, Toggle = Settings.TriggerKey, Settings.Toggle
+
+		if Typing then
 			return
 		end
-	
-		local target
-		local t
-		while Aimbot.Targetting == true do
-            print("Targetting")
-			local cam = workspace.CurrentCamera --account for ar2 which keeps replacing the camera
-			if target then
-              
-				local pos, vis = cam:WorldToViewportPoint(target.Position)
-				if not vis then
-					target = nil
-				else
-					local targetPos = Aimbot:Predict(cam.CFrame.p, target) or target.Position
-					pos, vis = cam:WorldToViewportPoint(targetPos)
-					if vis then
-						if not Aimbot.VisCheck or not workspace:FindPartOnRayWithIgnoreList(Ray.new(cam.CFrame.p, (targetPos - cam.CFrame.p).Unit * pos.Z), {plr.Character, target.Parent, cam}) then
-							local l = Vector2.new(pos.X, pos.Y - 36)--Vector2.new(mouse.X, mouse.Y):lerp(Vector2.new(pos.X, pos.Y - 36), math.min(0.4, (tick() - t) * 0.5))
-							--print("going from", mouse.X, mouse.Y, "to", (l.X - mouse.X) / LegoSettings.MouseSensitivity, (l.Y - mouse.Y) / LegoSettings.MouseSensitivity, "cuz", l.X, l.Y, math.min(0.5, (tick() - t) * 0.5))
-							local xDist = math.abs(l.X - mouse.X)
-							local yDist = math.abs(l.Y - mouse.Y)
-							mousemoverel(math.clamp((l.X - mouse.X) / LegoSettings.MouseSensitivity * 0.2, -xDist, xDist), math.clamp((l.Y - mouse.Y) / LegoSettings.MouseSensitivity * 0.2, -yDist, yDist))
-						end
-					end
-					rs:Wait()
+
+		if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == TriggerKey or Input.UserInputType == TriggerKey then
+			if Toggle then
+				Running = not Running
+
+				if not Running then
+					CancelLock()
 				end
 			else
-				target = GetTarget()
-				t = tick()
-				wait()
+				Running = true
 			end
 		end
-	end
+	end)
+
+	ServiceConnections.InputEndedConnection = Connect(__index(UserInputService, "InputEnded"), function(Input)
+		local TriggerKey, Toggle = Settings.TriggerKey, Settings.Toggle
+
+		if Toggle or Typing then
+			return
+		end
+
+		if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == TriggerKey or Input.UserInputType == TriggerKey then
+			Running = false
+			CancelLock()
+		end
+	end)
+end
+
+--// Typing Check
+
+ServiceConnections.TypingStartedConnection = Connect(__index(UserInputService, "TextBoxFocused"), function()
+	Typing = true
 end)
 
+ServiceConnections.TypingEndedConnection = Connect(__index(UserInputService, "TextBoxFocusReleased"), function()
+	Typing = false
+end)
 
+--// Functions
 
-return Aimbot
+function Environment.Exit(self) -- METHOD | ExunysDeveloperAimbot:Exit(<void>)
+	assert(self, "EXUNYS_AIMBOT-V3.Exit: Missing parameter #1 \"self\" <table>.")
+
+	for Index, _ in next, ServiceConnections do
+		Disconnect(ServiceConnections[Index])
+	end
+
+	Load = nil; ConvertVector = nil; CancelLock = nil; GetClosestPlayer = nil; GetRainbowColor = nil; FixUsername = nil
+
+	self.FOVCircle:Remove()
+	self.FOVCircleOutline:Remove()
+	getgenv().ExunysDeveloperAimbot = nil
+end
+
+function Environment.Restart() -- ExunysDeveloperAimbot.Restart(<void>)
+	for Index, _ in next, ServiceConnections do
+		Disconnect(ServiceConnections[Index])
+	end
+
+	Load()
+end
+
+function Environment.Blacklist(self, Username) -- METHOD | ExunysDeveloperAimbot:Blacklist(<string> Player Name)
+	assert(self, "EXUNYS_AIMBOT-V3.Blacklist: Missing parameter #1 \"self\" <table>.")
+	assert(Username, "EXUNYS_AIMBOT-V3.Blacklist: Missing parameter #2 \"Username\" <string>.")
+
+	Username = FixUsername(Username)
+
+	assert(self, "EXUNYS_AIMBOT-V3.Blacklist: User "..Username.." couldn't be found.")
+
+	self.Blacklisted[#self.Blacklisted + 1] = Username
+end
+
+function Environment.Whitelist(self, Username) -- METHOD | ExunysDeveloperAimbot:Whitelist(<string> Player Name)
+	assert(self, "EXUNYS_AIMBOT-V3.Whitelist: Missing parameter #1 \"self\" <table>.")
+	assert(Username, "EXUNYS_AIMBOT-V3.Whitelist: Missing parameter #2 \"Username\" <string>.")
+
+	Username = FixUsername(Username)
+
+	assert(Username, "EXUNYS_AIMBOT-V3.Whitelist: User "..Username.." couldn't be found.")
+
+	local Index = tablefind(self.Blacklisted, Username)
+
+	assert(Index, "EXUNYS_AIMBOT-V3.Whitelist: User "..Username.." is not blacklisted.")
+
+	tableremove(self.Blacklisted, Index)
+end
+
+function Environment.GetClosestPlayer() -- ExunysDeveloperAimbot.GetClosestPlayer(<void>)
+	GetClosestPlayer()
+	local Value = Environment.Locked
+	CancelLock()
+
+	return Value
+end
+
+Environment.Load = Load -- ExunysDeveloperAimbot.Load()
+
+setmetatable(Environment, {__call = Load})
+
+return Environment
