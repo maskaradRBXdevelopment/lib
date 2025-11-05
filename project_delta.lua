@@ -12,7 +12,7 @@ local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local AimbotManager = loadstring(game:HttpGet(repo .. 'addons/AimbotModule.lua'))()
-local EspManager = loadstring(game:HttpGet('https://kiriot22.com/goodbye/ESP.lua'))()
+local EspManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/refs/heads/main/addons/Esp_Lib.lua'))()
 
 print(HttpService:JSONEncode(getgenv().ESP_LIB))
 
