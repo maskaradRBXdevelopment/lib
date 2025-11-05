@@ -12,9 +12,9 @@ local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local AimbotManager = loadstring(game:HttpGet(repo .. 'addons/AimbotModule.lua'))()
-local EspManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Sirius/request/library/sense/source.lua'))()
+local EspManager = loadstring(game:HttpGet('https://kiriot22.com/goodbye/ESP.lua'))()
 
-
+print(HttpService:JSONEncode(getgenv().ESP_LIB))
 
 AimbotManager.Load()
 AimbotManager.Settings.Enabled = false
@@ -315,7 +315,7 @@ local esp_toggle = PlayerESPgroup:AddToggle('ESP_TOGGLE',{
 	Default = true,
 
 	Callback = function(value)
-		EspManager.Enabled = value
+		-- EspManager:Toggle(value)
 	end
 })
 
@@ -1030,3 +1030,4 @@ ThemeManager:ApplyToTab(Tabs['UI Settings'])
 -- You can use the SaveManager:LoadAutoloadConfig() to load a config
 -- which has been marked to be one that auto loads!
 SaveManager:LoadAutoloadConfig()
+
