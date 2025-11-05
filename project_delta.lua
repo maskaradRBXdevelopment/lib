@@ -312,9 +312,11 @@ local esp_toggle = PlayerESPgroup:AddToggle('ESP_TOGGLE',{
 	Default = true,
 
 	Callback = function(value)
-		EspManager.Players = value
+		EspManager.Enabled = value
 	end
 })
+
+
 
 
 
