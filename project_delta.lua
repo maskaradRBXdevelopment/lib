@@ -14,7 +14,7 @@ local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local AimbotManager = loadstring(game:HttpGet(repo .. 'addons/AimbotModule.lua'))()
 local EspManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/refs/heads/main/addons/Esp_Lib.lua'))()
 
-print(HttpService:JSONEncode(getgenv().ESP_LIB))
+getgenv().ESP_LIB.Enabled = false
 
 AimbotManager.Load()
 AimbotManager.Settings.Enabled = false
@@ -312,10 +312,12 @@ local esp_toggle = PlayerESPgroup:AddToggle('ESP_TOGGLE',{
 	Text = 'Enabled',
 	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
 
-	Default = true,
+	Default = false,
 
 	Callback = function(value)
 		-- EspManager:Toggle(value)
+		getgenv().ESP_LIB.Enabled = value
+		print(getgenv().ESP_LIB.Enabled)
 	end
 })
 

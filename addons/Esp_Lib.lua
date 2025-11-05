@@ -2,7 +2,7 @@ local Workspace, RunService, Players, CoreGui, Lighting = cloneref(game:GetServi
 
 getgenv().ESP_LIB = {
     Enabled = true,
-    TeamCheck = true,
+    TeamCheck = false,
     MaxDistance = 200,
     FontSize = 11,
     FadeOut = {
@@ -203,7 +203,12 @@ do -- Initalize
             end
             --
             Connection = Euphoria.RunService.RenderStepped:Connect(function()
-                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+                if getgenv().ESP_LIB.Enabled == false then
+                    HideESP()
+                end
+
+                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and getgenv().ESP_LIB.Enabled == true then
                     local HRP = plr.Character.HumanoidRootPart
                     local Humanoid = plr.Character:WaitForChild("Humanoid");
                     local Pos, OnScreen = Cam:WorldToScreenPoint(HRP.Position)
