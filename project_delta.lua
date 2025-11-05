@@ -1,3 +1,6 @@
+function color3torgb(color3)
+    return color3.R*255,color3.G*255,color3.B*255
+end
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 -- New example script written by wally
