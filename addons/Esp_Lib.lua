@@ -1,424 +1,411 @@
-local Workspace, RunService, Players, CoreGui, Lighting = cloneref(game:GetService("Workspace")), cloneref(game:GetService("RunService")), cloneref(game:GetService("Players")), game:GetService("CoreGui"), cloneref(game:GetService("Lighting"))
+-- esp.lua
+--// Variables
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local cache = {}
 
-getgenv().ESP_LIB = {
-    Enabled = true,
-    TeamCheck = false,
-    MaxDistance = 200,
-    FontSize = 11,
-    FadeOut = {
-        OnDistance = true,
-        OnDeath = false,
-        OnLeave = false,
-    },
-    Options = { 
-        Teamcheck = false, TeamcheckRGB = Color3.fromRGB(0, 255, 0),
-        Friendcheck = true, FriendcheckRGB = Color3.fromRGB(0, 255, 0),
-        Highlight = false, HighlightRGB = Color3.fromRGB(255, 0, 0),
-    },
-    Drawing = {
-        Chams = {
-            Enabled  = true,
-            Thermal = true,
-            FillRGB = Color3.fromRGB(119, 120, 255),
-            Fill_Transparency = 100,
-            OutlineRGB = Color3.fromRGB(119, 120, 255),
-            Outline_Transparency = 100,
-            VisibleCheck = true,
-        },
-        Names = {
-            Enabled = true,
-            RGB = Color3.fromRGB(255, 255, 255),
-        },
-        Flags = {
-            Enabled = true,
-        },
-        Distances = {
-            Enabled = true, 
-            Position = "Text",
-            RGB = Color3.fromRGB(255, 255, 255),
-        },
-        Weapons = {
-            Enabled = true, WeaponTextRGB = Color3.fromRGB(119, 120, 255),
-            Outlined = false,
-            Gradient = false,
-            GradientRGB1 = Color3.fromRGB(255, 255, 255), GradientRGB2 = Color3.fromRGB(119, 120, 255),
-        },
-        Healthbar = {
-            Enabled = true,  
-            HealthText = true, Lerp = false, HealthTextRGB = Color3.fromRGB(119, 120, 255),
-            Width = 2.5,
-            Gradient = true, GradientRGB1 = Color3.fromRGB(200, 0, 0), GradientRGB2 = Color3.fromRGB(60, 60, 125), GradientRGB3 = Color3.fromRGB(119, 120, 255), 
-        },
-        Boxes = {
-            Animate = true,
-            RotationSpeed = 300,
-            Gradient = false, GradientRGB1 = Color3.fromRGB(119, 120, 255), GradientRGB2 = Color3.fromRGB(0, 0, 0), 
-            GradientFill = true, GradientFillRGB1 = Color3.fromRGB(119, 120, 255), GradientFillRGB2 = Color3.fromRGB(0, 0, 0), 
-            Filled = {
-                Enabled = true,
-                Transparency = 0.75,
-                RGB = Color3.fromRGB(0, 0, 0),
-            },
-            Full = {
-                Enabled = true,
-                RGB = Color3.fromRGB(255, 255, 255),
-            },
-            Corner = {
-                Enabled = true,
-                RGB = Color3.fromRGB(255, 255, 255),
-            },
-        };
-    };
-    Connections = {
-        RunService = RunService;
-    };
-    Fonts = {};
+local bones = {
+    {"Head", "UpperTorso"},
+    {"UpperTorso", "RightUpperArm"},
+    {"RightUpperArm", "RightLowerArm"},
+    {"RightLowerArm", "RightHand"},
+    {"UpperTorso", "LeftUpperArm"},
+    {"LeftUpperArm", "LeftLowerArm"},
+    {"LeftLowerArm", "LeftHand"},
+    {"UpperTorso", "LowerTorso"},
+    {"LowerTorso", "LeftUpperLeg"},
+    {"LeftUpperLeg", "LeftLowerLeg"},
+    {"LeftLowerLeg", "LeftFoot"},
+    {"LowerTorso", "RightUpperLeg"},
+    {"RightUpperLeg", "RightLowerLeg"},
+    {"RightLowerLeg", "RightFoot"}
 }
 
--- Def & Vars
-local Euphoria = getgenv().ESP_LIB.Connections;
-local lplayer = Players.LocalPlayer;
-local camera = game.Workspace.CurrentCamera;
-local Cam = Workspace.CurrentCamera;
-local RotationAngle, Tick = -45, tick();
+--// Settings
+local ESP_SETTINGS = {
+    BoxOutlineColor = Color3.new(0, 0, 0),
+    BoxColor = Color3.new(1, 1, 1),
+    NameColor = Color3.new(1, 1, 1),
+    HealthOutlineColor = Color3.new(0, 0, 0),
+    HealthHighColor = Color3.new(0, 1, 0),
+    HealthLowColor = Color3.new(1, 0, 0),
+    CharSize = Vector2.new(4, 6),
+    Teamcheck = false,
+    WallCheck = false,
+    Enabled = false,
+    ShowBox = false,
+    BoxType = "2D",
+    ShowName = false,
+    ShowHealth = false,
+    ShowDistance = false,
+    ShowSkeletons = false,
+    ShowTracer = false,
+    TracerColor = Color3.new(1, 1, 1), 
+    TracerThickness = 2,
+    SkeletonsColor = Color3.new(1, 1, 1),
+    TracerPosition = "Bottom",
+}
 
--- Weapon Images
-local Weapon_Icons = {
-    ["Wooden Bow"] = "http://www.roblox.com/asset/?id=17677465400",
-    ["Crossbow"] = "http://www.roblox.com/asset/?id=17677473017",
-    ["Salvaged SMG"] = "http://www.roblox.com/asset/?id=17677463033",
-    ["Salvaged AK47"] = "http://www.roblox.com/asset/?id=17677455113",
-    ["Salvaged AK74u"] = "http://www.roblox.com/asset/?id=17677442346",
-    ["Salvaged M14"] = "http://www.roblox.com/asset/?id=17677444642",
-    ["Salvaged Python"] = "http://www.roblox.com/asset/?id=17677451737",
-    ["Military PKM"] = "http://www.roblox.com/asset/?id=17677449448",
-    ["Military M4A1"] = "http://www.roblox.com/asset/?id=17677479536",
-    ["Bruno's M4A1"] = "http://www.roblox.com/asset/?id=17677471185",
-    ["Military Barrett"] = "http://www.roblox.com/asset/?id=17677482998",
-    ["Salvaged Skorpion"] = "http://www.roblox.com/asset/?id=17677459658",
-    ["Salvaged Pump Action"] = "http://www.roblox.com/asset/?id=17677457186",
-    ["Military AA12"] = "http://www.roblox.com/asset/?id=17677475227",
-    ["Salvaged Break Action"] = "http://www.roblox.com/asset/?id=17677468751",
-    ["Salvaged Pipe Rifle"] = "http://www.roblox.com/asset/?id=17677468751",
-    ["Salvaged P250"] = "http://www.roblox.com/asset/?id=17677447257",
-    ["Nail Gun"] = "http://www.roblox.com/asset/?id=17677484756"
-};
-
--- Functions
-local Functions = {}
-do
-    function Functions:Create(Class, Properties)
-        local _Instance = typeof(Class) == 'string' and Instance.new(Class) or Class
-        for Property, Value in pairs(Properties) do
-            _Instance[Property] = Value
-        end
-        return _Instance;
+local function create(class, properties)
+    local drawing = Drawing.new(class)
+    for property, value in pairs(properties) do
+        drawing[property] = value
     end
-    --
-    function Functions:FadeOutOnDist(element, distance)
-        local transparency = math.max(0.1, 1 - (distance / getgenv().ESP_LIB.MaxDistance))
-        if element:IsA("TextLabel") then
-            element.TextTransparency = 1 - transparency
-        elseif element:IsA("ImageLabel") then
-            element.ImageTransparency = 1 - transparency
-        elseif element:IsA("UIStroke") then
-            element.Transparency = 1 - transparency
-        elseif element:IsA("Frame") and (element == Healthbar or element == BehindHealthbar) then
-            element.BackgroundTransparency = 1 - transparency
-        elseif element:IsA("Frame") then
-            element.BackgroundTransparency = 1 - transparency
-        elseif element:IsA("Highlight") then
-            element.FillTransparency = 1 - transparency
-            element.OutlineTransparency = 1 - transparency
-        end;
-    end;  
-end;
+    return drawing
+end
 
-do -- Initalize
-    local ScreenGui = Functions:Create("ScreenGui", {
-        Parent = CoreGui,
-        Name = "agidmgimhgiamhm",
-    });
+local function createEsp(player)
+    local esp = {
+        tracer = create("Line", {
+            Thickness = ESP_SETTINGS.TracerThickness,
+            Color = ESP_SETTINGS.TracerColor,
+            Transparency = 0.5
+        }),
+        boxOutline = create("Square", {
+            Color = ESP_SETTINGS.BoxOutlineColor,
+            Thickness = 3,
+            Filled = false
+        }),
+        box = create("Square", {
+            Color = ESP_SETTINGS.BoxColor,
+            Thickness = 1,
+            Filled = false
+        }),
+        name = create("Text", {
+            Color = ESP_SETTINGS.NameColor,
+            Outline = true,
+            Center = true,
+            Size = 13
+        }),
+        healthOutline = create("Line", {
+            Thickness = 3,
+            Color = ESP_SETTINGS.HealthOutlineColor
+        }),
+        health = create("Line", {
+            Thickness = 1
+        }),
+        distance = create("Text", {
+            Color = Color3.new(1, 1, 1),
+            Size = 12,
+            Outline = true,
+            Center = true
+        }),
+        tracer = create("Line", {
+            Thickness = ESP_SETTINGS.TracerThickness,
+            Color = ESP_SETTINGS.TracerColor,
+            Transparency = 1
+        }),
+        boxLines = {},
+    }
 
-    local DupeCheck = function(plr)
-        if ScreenGui:FindFirstChild(plr.Name) then
-            ScreenGui[plr.Name]:Destroy()
-        end
+    cache[player] = esp
+    cache[player]["skeletonlines"] = {}
+end
+
+local function isPlayerBehindWall(player)
+    local character = player.Character
+    if not character then
+        return false
     end
 
-    local ESP = function(plr)
-        coroutine.wrap(DupeCheck)(plr) -- Dupecheck
-        local Name = Functions:Create("TextLabel", {Parent = ScreenGui, Position = UDim2.new(0.5, 0, 0, -11), Size = UDim2.new(0, 100, 0, 20), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.Code, TextSize = getgenv().ESP_LIB.FontSize, TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(0, 0, 0), RichText = true})
-        local Distance = Functions:Create("TextLabel", {Parent = ScreenGui, Position = UDim2.new(0.5, 0, 0, 11), Size = UDim2.new(0, 100, 0, 20), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.Code, TextSize = getgenv().ESP_LIB.FontSize, TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(0, 0, 0), RichText = true})
-        local Weapon = Functions:Create("TextLabel", {Parent = ScreenGui, Position = UDim2.new(0.5, 0, 0, 31), Size = UDim2.new(0, 100, 0, 20), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.Code, TextSize = getgenv().ESP_LIB.FontSize, TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(0, 0, 0), RichText = true})
-        local Box = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = Color3.fromRGB(0, 0, 0), BackgroundTransparency = 0.75, BorderSizePixel = 0})
-        local Gradient1 = Functions:Create("UIGradient", {Parent = Box, Enabled = getgenv().ESP_LIB.Drawing.Boxes.GradientFill, Color = ColorSequence.new{ColorSequenceKeypoint.new(0, getgenv().ESP_LIB.Drawing.Boxes.GradientFillRGB1), ColorSequenceKeypoint.new(1, getgenv().ESP_LIB.Drawing.Boxes.GradientFillRGB2)}})
-        local Outline = Functions:Create("UIStroke", {Parent = Box, Enabled = getgenv().ESP_LIB.Drawing.Boxes.Gradient, Transparency = 0, Color = Color3.fromRGB(255, 255, 255), LineJoinMode = Enum.LineJoinMode.Miter})
-        local Gradient2 = Functions:Create("UIGradient", {Parent = Outline, Enabled = getgenv().ESP_LIB.Drawing.Boxes.Gradient, Color = ColorSequence.new{ColorSequenceKeypoint.new(0, getgenv().ESP_LIB.Drawing.Boxes.GradientRGB1), ColorSequenceKeypoint.new(1, getgenv().ESP_LIB.Drawing.Boxes.GradientRGB2)}})
-        local Healthbar = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0})
-        local BehindHealthbar = Functions:Create("Frame", {Parent = ScreenGui, ZIndex = -1, BackgroundColor3 = Color3.fromRGB(0, 0, 0), BackgroundTransparency = 0})
-        local HealthbarGradient = Functions:Create("UIGradient", {Parent = Healthbar, Enabled = getgenv().ESP_LIB.Drawing.Healthbar.Gradient, Rotation = -90, Color = ColorSequence.new{ColorSequenceKeypoint.new(0, getgenv().ESP_LIB.Drawing.Healthbar.GradientRGB1), ColorSequenceKeypoint.new(0.5, getgenv().ESP_LIB.Drawing.Healthbar.GradientRGB2), ColorSequenceKeypoint.new(1, getgenv().ESP_LIB.Drawing.Healthbar.GradientRGB3)}})
-        local HealthText = Functions:Create("TextLabel", {Parent = ScreenGui, Position = UDim2.new(0.5, 0, 0, 31), Size = UDim2.new(0, 100, 0, 20), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.Code, TextSize = getgenv().ESP_LIB.FontSize, TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(0, 0, 0)})
-        local Chams = Functions:Create("Highlight", {Parent = ScreenGui, FillTransparency = 1, OutlineTransparency = 0, OutlineColor = Color3.fromRGB(119, 120, 255), DepthMode = "AlwaysOnTop"})
-        local WeaponIcon = Functions:Create("ImageLabel", {Parent = ScreenGui, BackgroundTransparency = 1, BorderColor3 = Color3.fromRGB(0, 0, 0), BorderSizePixel = 0, Size = UDim2.new(0, 40, 0, 40)})
-        local Gradient3 = Functions:Create("UIGradient", {Parent = WeaponIcon, Rotation = -90, Enabled = getgenv().ESP_LIB.Drawing.Weapons.Gradient, Color = ColorSequence.new{ColorSequenceKeypoint.new(0, getgenv().ESP_LIB.Drawing.Weapons.GradientRGB1), ColorSequenceKeypoint.new(1, getgenv().ESP_LIB.Drawing.Weapons.GradientRGB2)}})
-        local LeftTop = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = getgenv().ESP_LIB.Drawing.Boxes.Corner.RGB, Position = UDim2.new(0, 0, 0, 0)})
-        local LeftSide = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = getgenv().ESP_LIB.Drawing.Boxes.Corner.RGB, Position = UDim2.new(0, 0, 0, 0)})
-        local RightTop = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = getgenv().ESP_LIB.Drawing.Boxes.Corner.RGB, Position = UDim2.new(0, 0, 0, 0)})
-        local RightSide = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = getgenv().ESP_LIB.Drawing.Boxes.Corner.RGB, Position = UDim2.new(0, 0, 0, 0)})
-        local BottomSide = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = getgenv().ESP_LIB.Drawing.Boxes.Corner.RGB, Position = UDim2.new(0, 0, 0, 0)})
-        local BottomDown = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = getgenv().ESP_LIB.Drawing.Boxes.Corner.RGB, Position = UDim2.new(0, 0, 0, 0)})
-        local BottomRightSide = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = getgenv().ESP_LIB.Drawing.Boxes.Corner.RGB, Position = UDim2.new(0, 0, 0, 0)})
-        local BottomRightDown = Functions:Create("Frame", {Parent = ScreenGui, BackgroundColor3 = getgenv().ESP_LIB.Drawing.Boxes.Corner.RGB, Position = UDim2.new(0, 0, 0, 0)})
-        local Flag1 = Functions:Create("TextLabel", {Parent = ScreenGui, Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0, 100, 0, 20), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.Code, TextSize = getgenv().ESP_LIB.FontSize, TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(0, 0, 0)})
-        local Flag2 = Functions:Create("TextLabel", {Parent = ScreenGui, Position = UDim2.new(1, 0, 0, 0), Size = UDim2.new(0, 100, 0, 20), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.Code, TextSize = getgenv().ESP_LIB.FontSize, TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(0, 0, 0)})
-        --local DroppedItems = Functions:Create("TextLabel", {Parent = ScreenGui, AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.Code, TextSize = ESP.FontSize, TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(0, 0, 0)})
-        --
-        local Updater = function()
-            local Connection;
-            local function HideESP()
-                Box.Visible = false;
-                Name.Visible = false;
-                Distance.Visible = false;
-                Weapon.Visible = false;
-                Healthbar.Visible = false;
-                BehindHealthbar.Visible = false;
-                HealthText.Visible = false;
-                WeaponIcon.Visible = false;
-                LeftTop.Visible = false;
-                LeftSide.Visible = false;
-                BottomSide.Visible = false;
-                BottomDown.Visible = false;
-                RightTop.Visible = false;
-                RightSide.Visible = false;
-                BottomRightSide.Visible = false;
-                BottomRightDown.Visible = false;
-                Flag1.Visible = false;
-                Chams.Enabled = false;
-                Flag2.Visible = false;
-                if not plr then
-                    ScreenGui:Destroy();
-                    Connection:Disconnect();
-                end
-            end
-            --
-            Connection = Euphoria.RunService.RenderStepped:Connect(function()
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        return false
+    end
 
-                if getgenv().ESP_LIB.Enabled == false then
-                    HideESP()
-                end
+    local ray = Ray.new(camera.CFrame.Position, (rootPart.Position - camera.CFrame.Position).Unit * (rootPart.Position - camera.CFrame.Position).Magnitude)
+    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {localPlayer.Character, character})
+    
+    return hit and hit:IsA("Part")
+end
 
-                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and getgenv().ESP_LIB.Enabled == true then
-                    local HRP = plr.Character.HumanoidRootPart
-                    local Humanoid = plr.Character:WaitForChild("Humanoid");
-                    local Pos, OnScreen = Cam:WorldToScreenPoint(HRP.Position)
-                    local Dist = (Cam.CFrame.Position - HRP.Position).Magnitude / 3.5714285714
-                    
-                    if OnScreen and Dist <= getgenv().ESP_LIB.MaxDistance then
-                        local Size = HRP.Size.Y
-                        local scaleFactor = (Size * Cam.ViewportSize.Y) / (Pos.Z * 2)
-                        local w, h = 3 * scaleFactor, 4.5 * scaleFactor
+local function removeEsp(player)
+    local esp = cache[player]
+    if not esp then return end
 
-                        -- Fade-out effect --
-                        if getgenv().ESP_LIB.FadeOut.OnDistance then
-                            Functions:FadeOutOnDist(Box, Dist)
-                            Functions:FadeOutOnDist(Outline, Dist)
-                            Functions:FadeOutOnDist(Name, Dist)
-                            Functions:FadeOutOnDist(Distance, Dist)
-                            Functions:FadeOutOnDist(Weapon, Dist)
-                            Functions:FadeOutOnDist(Healthbar, Dist)
-                            Functions:FadeOutOnDist(BehindHealthbar, Dist)
-                            Functions:FadeOutOnDist(HealthText, Dist)
-                            Functions:FadeOutOnDist(WeaponIcon, Dist)
-                            Functions:FadeOutOnDist(LeftTop, Dist)
-                            Functions:FadeOutOnDist(LeftSide, Dist)
-                            Functions:FadeOutOnDist(BottomSide, Dist)
-                            Functions:FadeOutOnDist(BottomDown, Dist)
-                            Functions:FadeOutOnDist(RightTop, Dist)
-                            Functions:FadeOutOnDist(RightSide, Dist)
-                            Functions:FadeOutOnDist(BottomRightSide, Dist)
-                            Functions:FadeOutOnDist(BottomRightDown, Dist)
-                            Functions:FadeOutOnDist(Chams, Dist)
-                            Functions:FadeOutOnDist(Flag1, Dist)
-                            Functions:FadeOutOnDist(Flag2, Dist)
-                        end
+    for _, drawing in pairs(esp) do
+        drawing:Remove()
+    end
 
-                        -- Teamcheck
-                        if getgenv().ESP_LIB.TeamCheck and plr ~= lplayer and ((lplayer.Team ~= plr.Team and plr.Team) or (not lplayer.Team and not plr.Team)) and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Humanoid") then
+    cache[player] = nil
+end
 
-                            do -- Chams
-                                Chams.Adornee = plr.Character
-                                Chams.Enabled = getgenv().ESP_LIB.Drawing.Chams.Enabled
-                                Chams.FillColor = getgenv().ESP_LIB.Drawing.Chams.FillRGB
-                                Chams.OutlineColor = getgenv().ESP_LIB.Drawing.Chams.OutlineRGB
-                                do -- Breathe
-                                    if getgenv().ESP_LIB.Drawing.Chams.Thermal then
-                                        local breathe_effect = math.atan(math.sin(tick() * 2)) * 2 / math.pi
-                                        Chams.FillTransparency = getgenv().ESP_LIB.Drawing.Chams.Fill_Transparency * breathe_effect * 0.01
-                                        Chams.OutlineTransparency = getgenv().ESP_LIB.Drawing.Chams.Outline_Transparency * breathe_effect * 0.01
-                                    end
-                                end
-                                if getgenv().ESP_LIB.Drawing.Chams.VisibleCheck then
-                                    Chams.DepthMode = "Occluded"
-                                else
-                                    Chams.DepthMode = "AlwaysOnTop"
-                                end
-                            end;
+local function updateEsp()
+    for player, esp in pairs(cache) do
+        local character, team = player.Character, player.Team
+        if character and (not ESP_SETTINGS.Teamcheck or (team and team ~= localPlayer.Team)) then
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            local head = character:FindFirstChild("Head")
+            local humanoid = character:FindFirstChild("Humanoid")
+            local isBehindWall = ESP_SETTINGS.WallCheck and isPlayerBehindWall(player)
+            local shouldShow = not isBehindWall and ESP_SETTINGS.Enabled
+            if rootPart and head and humanoid and shouldShow then
+                local position, onScreen = camera:WorldToViewportPoint(rootPart.Position)
+                if onScreen then
+                    local hrp2D = camera:WorldToViewportPoint(rootPart.Position)
+                    local charSize = (camera:WorldToViewportPoint(rootPart.Position - Vector3.new(0, 3, 0)).Y - camera:WorldToViewportPoint(rootPart.Position + Vector3.new(0, 2.6, 0)).Y) / 2
+                    local boxSize = Vector2.new(math.floor(charSize * 1.8), math.floor(charSize * 1.9))
+                    local boxPosition = Vector2.new(math.floor(hrp2D.X - charSize * 1.8 / 2), math.floor(hrp2D.Y - charSize * 1.6 / 2))
 
-                            do -- Corner Boxes
-                                LeftTop.Visible = getgenv().ESP_LIB.Drawing.Boxes.Corner.Enabled
-                                LeftTop.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y - h / 2)
-                                LeftTop.Size = UDim2.new(0, w / 5, 0, 1)
-                                
-                                LeftSide.Visible = getgenv().ESP_LIB.Drawing.Boxes.Corner.Enabled
-                                LeftSide.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y - h / 2)
-                                LeftSide.Size = UDim2.new(0, 1, 0, h / 5)
-                                
-                                BottomSide.Visible = getgenv().ESP_LIB.Drawing.Boxes.Corner.Enabled
-                                BottomSide.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y + h / 2)
-                                BottomSide.Size = UDim2.new(0, 1, 0, h / 5)
-                                BottomSide.AnchorPoint = Vector2.new(0, 5)
-                                
-                                BottomDown.Visible = getgenv().ESP_LIB.Drawing.Boxes.Corner.Enabled
-                                BottomDown.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y + h / 2)
-                                BottomDown.Size = UDim2.new(0, w / 5, 0, 1)
-                                BottomDown.AnchorPoint = Vector2.new(0, 1)
-                                
-                                RightTop.Visible = getgenv().ESP_LIB.Drawing.Boxes.Corner.Enabled
-                                RightTop.Position = UDim2.new(0, Pos.X + w / 2, 0, Pos.Y - h / 2)
-                                RightTop.Size = UDim2.new(0, w / 5, 0, 1)
-                                RightTop.AnchorPoint = Vector2.new(1, 0)
-                                
-                                RightSide.Visible = getgenv().ESP_LIB.Drawing.Boxes.Corner.Enabled
-                                RightSide.Position = UDim2.new(0, Pos.X + w / 2 - 1, 0, Pos.Y - h / 2)
-                                RightSide.Size = UDim2.new(0, 1, 0, h / 5)
-                                RightSide.AnchorPoint = Vector2.new(0, 0)
-                                
-                                BottomRightSide.Visible = getgenv().ESP_LIB.Drawing.Boxes.Corner.Enabled
-                                BottomRightSide.Position = UDim2.new(0, Pos.X + w / 2, 0, Pos.Y + h / 2)
-                                BottomRightSide.Size = UDim2.new(0, 1, 0, h / 5)
-                                BottomRightSide.AnchorPoint = Vector2.new(1, 1)
-                                
-                                BottomRightDown.Visible = getgenv().ESP_LIB.Drawing.Boxes.Corner.Enabled
-                                BottomRightDown.Position = UDim2.new(0, Pos.X + w / 2, 0, Pos.Y + h / 2)
-                                BottomRightDown.Size = UDim2.new(0, w / 5, 0, 1)
-                                BottomRightDown.AnchorPoint = Vector2.new(1, 1)                                                            
+                    if ESP_SETTINGS.ShowName and ESP_SETTINGS.Enabled then
+                        esp.name.Visible = true
+                        esp.name.font = Enum.Font.RobotoMono
+                        esp.name.Text = string.lower(player.Name)
+                        esp.name.Position = Vector2.new(boxSize.X / 2 + boxPosition.X, boxPosition.Y - 16)
+                        esp.name.Color = ESP_SETTINGS.NameColor
+                    else
+                        esp.name.Visible = false
+                    end
+
+                    if ESP_SETTINGS.ShowBox and ESP_SETTINGS.Enabled then
+                        if ESP_SETTINGS.BoxType == "2D" then
+                            esp.boxOutline.Size = boxSize
+                            esp.boxOutline.Position = boxPosition
+                            esp.box.Size = boxSize
+                            esp.box.Position = boxPosition
+                            esp.box.Color = ESP_SETTINGS.BoxColor
+                            esp.box.Visible = true
+                            esp.boxOutline.Visible = true
+                            for _, line in ipairs(esp.boxLines) do
+                                line:Remove()
                             end
-
-                            do -- Boxes
-                                Box.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y - h / 2)
-                                Box.Size = UDim2.new(0, w, 0, h)
-                                Box.Visible = getgenv().ESP_LIB.Drawing.Boxes.Full.Enabled;
-
-                                -- Gradient
-                                if getgenv().ESP_LIB.Drawing.Boxes.Filled.Enabled then
-                                    Box.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                                    if getgenv().ESP_LIB.Drawing.Boxes.GradientFill then
-                                        Box.BackgroundTransparency = getgenv().ESP_LIB.Drawing.Boxes.Filled.Transparency;
-                                    else
-                                        Box.BackgroundTransparency = 1
-                                    end
-                                    Box.BorderSizePixel = 1
-                                else
-                                    Box.BackgroundTransparency = 1
-                                end
-                                -- Animation
-                                RotationAngle = RotationAngle + (tick() - Tick) * getgenv().ESP_LIB.Drawing.Boxes.RotationSpeed * math.cos(math.pi / 4 * tick() - math.pi / 2)
-                                if getgenv().ESP_LIB.Drawing.Boxes.Animate then
-                                    Gradient1.Rotation = RotationAngle
-                                    Gradient2.Rotation = RotationAngle
-                                else
-                                    Gradient1.Rotation = -45
-                                    Gradient2.Rotation = -45
-                                end
-                                Tick = tick()
-                            end
-
-                            -- Healthbar
-                            do  
-                                local health = Humanoid.Health / Humanoid.MaxHealth;
-                                Healthbar.Visible = getgenv().ESP_LIB.Drawing.Healthbar.Enabled;
-                                Healthbar.Position = UDim2.new(0, Pos.X - w / 2 - 6, 0, Pos.Y - h / 2 + h * (1 - health))  
-                                Healthbar.Size = UDim2.new(0, getgenv().ESP_LIB.Drawing.Healthbar.Width, 0, h * health)  
-                                --
-                                BehindHealthbar.Visible = getgenv().ESP_LIB.Drawing.Healthbar.Enabled;
-                                BehindHealthbar.Position = UDim2.new(0, Pos.X - w / 2 - 6, 0, Pos.Y - h / 2)  
-                                BehindHealthbar.Size = UDim2.new(0, getgenv().ESP_LIB.Drawing.Healthbar.Width, 0, h)
-                                -- Health Text
-                                do
-                                    if getgenv().ESP_LIB.Drawing.Healthbar.HealthText then
-                                        local healthPercentage = math.floor(Humanoid.Health / Humanoid.MaxHealth * 100)
-                                        HealthText.Position = UDim2.new(0, Pos.X - w / 2 - 6, 0, Pos.Y - h / 2 + h * (1 - healthPercentage / 100) + 3)
-                                        HealthText.Text = tostring(healthPercentage)
-                                        HealthText.Visible = Humanoid.Health < Humanoid.MaxHealth
-                                        if getgenv().ESP_LIB.Drawing.Healthbar.Lerp then
-                                            local color = health >= 0.75 and Color3.fromRGB(0, 255, 0) or health >= 0.5 and Color3.fromRGB(255, 255, 0) or health >= 0.25 and Color3.fromRGB(255, 170, 0) or Color3.fromRGB(255, 0, 0)
-                                            HealthText.TextColor3 = color
-                                        else
-                                            HealthText.TextColor3 = getgenv().ESP_LIB.Drawing.Healthbar.HealthTextRGB
-                                        end
-                                    end                        
+                        elseif ESP_SETTINGS.BoxType == "Corner Box Esp" then
+                            local lineW = (boxSize.X / 5)
+                            local lineH = (boxSize.Y / 6)
+                            local lineT = 1
+    
+                            if #esp.boxLines == 0 then
+                                for i = 1, 16 do
+                                    local boxLine = create("Line", {
+                                        Thickness = 1,
+                                        Color = ESP_SETTINGS.BoxColor,
+                                        Transparency = 1
+                                    })
+                                    esp.boxLines[#esp.boxLines + 1] = boxLine
                                 end
                             end
-
-                            do -- Names
-                                Name.Visible = getgenv().ESP_LIB.Drawing.Names.Enabled
-                                if getgenv().ESP_LIB.Options.Friendcheck and lplayer:IsFriendsWith(plr.UserId) then
-                                    Name.Text = string.format('(<font color="rgb(%d, %d, %d)">F</font>) %s', getgenv().ESP_LIB.Options.FriendcheckRGB.R * 255, getgenv().ESP_LIB.Options.FriendcheckRGB.G * 255, getgenv().ESP_LIB.Options.FriendcheckRGB.B * 255, plr.Name)
-                                else
-                                    Name.Text = string.format('(<font color="rgb(%d, %d, %d)">E</font>) %s', 255, 0, 0, plr.Name)
-                                end
-                                Name.Position = UDim2.new(0, Pos.X, 0, Pos.Y - h / 2 - 9)
+    
+                            local boxLines = esp.boxLines
+    
+                            -- top left
+                            boxLines[1].From = Vector2.new(boxPosition.X - lineT, boxPosition.Y - lineT)
+                            boxLines[1].To = Vector2.new(boxPosition.X + lineW, boxPosition.Y - lineT)
+    
+                            boxLines[2].From = Vector2.new(boxPosition.X - lineT, boxPosition.Y - lineT)
+                            boxLines[2].To = Vector2.new(boxPosition.X - lineT, boxPosition.Y + lineH)
+    
+                            -- top right
+                            boxLines[3].From = Vector2.new(boxPosition.X + boxSize.X - lineW, boxPosition.Y - lineT)
+                            boxLines[3].To = Vector2.new(boxPosition.X + boxSize.X + lineT, boxPosition.Y - lineT)
+    
+                            boxLines[4].From = Vector2.new(boxPosition.X + boxSize.X + lineT, boxPosition.Y - lineT)
+                            boxLines[4].To = Vector2.new(boxPosition.X + boxSize.X + lineT, boxPosition.Y + lineH)
+    
+                            -- bottom left
+                            boxLines[5].From = Vector2.new(boxPosition.X - lineT, boxPosition.Y + boxSize.Y - lineH)
+                            boxLines[5].To = Vector2.new(boxPosition.X - lineT, boxPosition.Y + boxSize.Y + lineT)
+    
+                            boxLines[6].From = Vector2.new(boxPosition.X - lineT, boxPosition.Y + boxSize.Y + lineT)
+                            boxLines[6].To = Vector2.new(boxPosition.X + lineW, boxPosition.Y + boxSize.Y + lineT)
+    
+                            -- bottom right
+                            boxLines[7].From = Vector2.new(boxPosition.X + boxSize.X - lineW, boxPosition.Y + boxSize.Y + lineT)
+                            boxLines[7].To = Vector2.new(boxPosition.X + boxSize.X + lineT, boxPosition.Y + boxSize.Y + lineT)
+    
+                            boxLines[8].From = Vector2.new(boxPosition.X + boxSize.X + lineT, boxPosition.Y + boxSize.Y - lineH)
+                            boxLines[8].To = Vector2.new(boxPosition.X + boxSize.X + lineT, boxPosition.Y + boxSize.Y + lineT)
+    
+                            -- inline
+                            for i = 9, 16 do
+                                boxLines[i].Thickness = 2
+                                boxLines[i].Color = ESP_SETTINGS.BoxOutlineColor
+                                boxLines[i].Transparency = 1
                             end
-                            
-                            do -- Distance
-                                if getgenv().ESP_LIB.Drawing.Distances.Enabled then
-                                    if getgenv().ESP_LIB.Drawing.Distances.Position == "Bottom" then
-                                        Weapon.Position = UDim2.new(0, Pos.X, 0, Pos.Y + h / 2 + 18)
-                                        WeaponIcon.Position = UDim2.new(0, Pos.X - 21, 0, Pos.Y + h / 2 + 15);
-                                        Distance.Position = UDim2.new(0, Pos.X, 0, Pos.Y + h / 2 + 7)
-                                        Distance.Text = string.format("%d meters", math.floor(Dist))
-                                        Distance.Visible = true
-                                    elseif getgenv().ESP_LIB.Drawing.Distances.Position == "Text" then
-                                        Weapon.Position = UDim2.new(0, Pos.X, 0, Pos.Y + h / 2 + 8)
-                                        WeaponIcon.Position = UDim2.new(0, Pos.X - 21, 0, Pos.Y + h / 2 + 5);
-                                        Distance.Visible = false
-                                        if getgenv().ESP_LIB.Options.Friendcheck and lplayer:IsFriendsWith(plr.UserId) then
-                                            Name.Text = string.format('(<font color="rgb(%d, %d, %d)">F</font>) %s [%d]', getgenv().ESP_LIB.Options.FriendcheckRGB.R * 255, getgenv().ESP_LIB.Options.FriendcheckRGB.G * 255, getgenv().ESP_LIB.Options.FriendcheckRGB.B * 255, plr.Name, math.floor(Dist))
-                                        else
-                                            Name.Text = string.format('(<font color="rgb(%d, %d, %d)">E</font>) %s [%d]', 255, 0, 0, plr.Name, math.floor(Dist))
-                                        end
-                                        Name.Visible = getgenv().ESP_LIB.Drawing.Names.Enabled
-                                    end
-                                end
+    
+                            boxLines[9].From = Vector2.new(boxPosition.X, boxPosition.Y)
+                            boxLines[9].To = Vector2.new(boxPosition.X, boxPosition.Y + lineH)
+    
+                            boxLines[10].From = Vector2.new(boxPosition.X, boxPosition.Y)
+                            boxLines[10].To = Vector2.new(boxPosition.X + lineW, boxPosition.Y)
+    
+                            boxLines[11].From = Vector2.new(boxPosition.X + boxSize.X - lineW, boxPosition.Y)
+                            boxLines[11].To = Vector2.new(boxPosition.X + boxSize.X, boxPosition.Y)
+    
+                            boxLines[12].From = Vector2.new(boxPosition.X + boxSize.X, boxPosition.Y)
+                            boxLines[12].To = Vector2.new(boxPosition.X + boxSize.X, boxPosition.Y + lineH)
+    
+                            boxLines[13].From = Vector2.new(boxPosition.X, boxPosition.Y + boxSize.Y - lineH)
+                            boxLines[13].To = Vector2.new(boxPosition.X, boxPosition.Y + boxSize.Y)
+    
+                            boxLines[14].From = Vector2.new(boxPosition.X, boxPosition.Y + boxSize.Y)
+                            boxLines[14].To = Vector2.new(boxPosition.X + lineW, boxPosition.Y + boxSize.Y)
+    
+                            boxLines[15].From = Vector2.new(boxPosition.X + boxSize.X - lineW, boxPosition.Y + boxSize.Y)
+                            boxLines[15].To = Vector2.new(boxPosition.X + boxSize.X, boxPosition.Y + boxSize.Y)
+    
+                            boxLines[16].From = Vector2.new(boxPosition.X + boxSize.X, boxPosition.Y + boxSize.Y - lineH)
+                            boxLines[16].To = Vector2.new(boxPosition.X + boxSize.X, boxPosition.Y + boxSize.Y)
+    
+                            for _, line in ipairs(boxLines) do
+                                line.Visible = true
                             end
-
-                            do -- Weapons
-                                Weapon.Text = "none"
-                                Weapon.Visible = getgenv().ESP_LIB.Drawing.Weapons.Enabled
-                            end                            
-                        else
-                            HideESP();
+                            esp.box.Visible = false
+                            esp.boxOutline.Visible = false
                         end
                     else
-                        HideESP();
+                        esp.box.Visible = false
+                        esp.boxOutline.Visible = false
+                        for _, line in ipairs(esp.boxLines) do
+                            line:Remove()
+                        end
+                        esp.boxLines = {}
+                    end
+
+                    if ESP_SETTINGS.ShowHealth and ESP_SETTINGS.Enabled then
+                        esp.healthOutline.Visible = true
+                        esp.health.Visible = true
+                        local healthPercentage = player.Character.Humanoid.Health / player.Character.Humanoid.MaxHealth
+                        esp.healthOutline.From = Vector2.new(boxPosition.X - 6, boxPosition.Y + boxSize.Y)
+                        esp.healthOutline.To = Vector2.new(esp.healthOutline.From.X, esp.healthOutline.From.Y - boxSize.Y)
+                        esp.health.From = Vector2.new((boxPosition.X - 5), boxPosition.Y + boxSize.Y)
+                        esp.health.To = Vector2.new(esp.health.From.X, esp.health.From.Y - (player.Character.Humanoid.Health / player.Character.Humanoid.MaxHealth) * boxSize.Y)
+                        esp.health.Color = ESP_SETTINGS.HealthLowColor:Lerp(ESP_SETTINGS.HealthHighColor, healthPercentage)
+                    else
+                        esp.healthOutline.Visible = false
+                        esp.health.Visible = false
+                    end
+
+                    if ESP_SETTINGS.ShowDistance and ESP_SETTINGS.Enabled then
+                        local distance = (camera.CFrame.p - rootPart.Position).Magnitude
+                        esp.distance.Text = string.format("%.1f studs", distance)
+                        esp.distance.font = Enum.Font.RobotoMono
+                        esp.distance.Position = Vector2.new(boxPosition.X + boxSize.X / 2, boxPosition.Y + boxSize.Y + 5)
+                        esp.distance.Visible = true
+                    else
+                        esp.distance.Visible = false
+                    end
+
+                    if ESP_SETTINGS.ShowSkeletons and ESP_SETTINGS.Enabled then
+                        if #esp["skeletonlines"] == 0 then
+                            for _, bonePair in ipairs(bones) do
+                                local parentBone, childBone = bonePair[1], bonePair[2]
+                                
+                                if player.Character and player.Character[parentBone] and player.Character[childBone] then
+                                    local skeletonLine = create("Line", {
+                                        Thickness = 1,
+                                        Color = ESP_SETTINGS.SkeletonsColor,
+                                        Transparency = 1
+                                    })
+                                    esp["skeletonlines"][#esp["skeletonlines"] + 1] = {skeletonLine, parentBone, childBone}
+                                end
+                            end
+                        end
+                    
+                        for _, lineData in ipairs(esp["skeletonlines"]) do
+                            local skeletonLine = lineData[1]
+                            local parentBone, childBone = lineData[2], lineData[3]
+                    
+                            if player.Character and player.Character[parentBone] and player.Character[childBone] then
+                                local parentPosition = camera:WorldToViewportPoint(player.Character[parentBone].Position)
+                                local childPosition = camera:WorldToViewportPoint(player.Character[childBone].Position)
+                    
+                                skeletonLine.From = Vector2.new(parentPosition.X, parentPosition.Y)
+                                skeletonLine.To = Vector2.new(childPosition.X, childPosition.Y)
+                                skeletonLine.Color = ESP_SETTINGS.SkeletonsColor
+                                skeletonLine.Visible = true
+                            else
+                                skeletonLine:Remove()
+                            end
+                        end
+                    else
+                        for _, lineData in ipairs(esp["skeletonlines"]) do
+                            local skeletonLine = lineData[1]
+                            skeletonLine:Remove()
+                        end
+                        esp["skeletonlines"] = {}
+                    end                    
+
+                    if ESP_SETTINGS.ShowTracer and ESP_SETTINGS.Enabled then
+                        local tracerY
+                        if ESP_SETTINGS.TracerPosition == "Top" then
+                            tracerY = 0
+                        elseif ESP_SETTINGS.TracerPosition == "Middle" then
+                            tracerY = camera.ViewportSize.Y / 2
+                        else
+                            tracerY = camera.ViewportSize.Y
+                        end
+                        if ESP_SETTINGS.Teamcheck and player.TeamColor == localPlayer.TeamColor then
+                            esp.tracer.Visible = false
+                        else
+                            esp.tracer.Visible = true
+                            esp.tracer.From = Vector2.new(camera.ViewportSize.X / 2, tracerY)
+                            esp.tracer.To = Vector2.new(hrp2D.X, hrp2D.Y)            
+                        end
+                    else
+                        esp.tracer.Visible = false
                     end
                 else
-                    HideESP();
+                    for _, drawing in pairs(esp) do
+                        drawing.Visible = false
+                    end
+                    for _, lineData in ipairs(esp["skeletonlines"]) do
+                        local skeletonLine = lineData[1]
+                        skeletonLine:Remove()
+                    end
+                    esp["skeletonlines"] = {}
+                    for _, line in ipairs(esp.boxLines) do
+                        line:Remove()
+                    end
+                    esp.boxLines = {}
                 end
-            end)
+            else
+                for _, drawing in pairs(esp) do
+                    drawing.Visible = false
+                end
+                for _, lineData in ipairs(esp["skeletonlines"]) do
+                    local skeletonLine = lineData[1]
+                    skeletonLine:Remove()
+                end
+                esp["skeletonlines"] = {}
+                for _, line in ipairs(esp.boxLines) do
+                    line:Remove()
+                end
+                esp.boxLines = {}
+            end
+        else
+            for _, drawing in pairs(esp) do
+                drawing.Visible = false
+            end
+            for _, lineData in ipairs(esp["skeletonlines"]) do
+                local skeletonLine = lineData[1]
+                skeletonLine:Remove()
+            end
+            esp["skeletonlines"] = {}
+            for _, line in ipairs(esp.boxLines) do
+                line:Remove()
+            end
+            esp.boxLines = {}
         end
-        coroutine.wrap(Updater)();
     end
-    do -- Update ESP
-        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-            if v.Name ~= lplayer.Name then
-                coroutine.wrap(ESP)(v)
-            end      
-        end
-        --
-        game:GetService("Players").PlayerAdded:Connect(function(v)
-            coroutine.wrap(ESP)(v)
-        end);
-    end;
-end;
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= localPlayer then
+        createEsp(player)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= localPlayer then
+        createEsp(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    removeEsp(player)
+end)
+
+RunService.RenderStepped:Connect(updateEsp)
+return ESP_SETTINGS

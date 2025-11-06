@@ -6,19 +6,26 @@ local Players = game:GetService("Players")
 -- New example script written by wally
 -- You can suggest changes with a pull request or something
 
+
+
 local repo = 'https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/main/'
 
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local AimbotManager = loadstring(game:HttpGet(repo .. 'addons/AimbotModule.lua'))()
-local EspManager = loadstring(game:HttpGet('https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/refs/heads/main/addons/Esp_Lib.lua'))()
+local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaster2/esp-library/main/library.lua"))();
 
-getgenv().ESP_LIB.Enabled = false
+local ESP_TARGETS = {
+	PlayerE = {
+
+	},
+
+	InstanceE = {}
+}
 
 AimbotManager.Load()
 AimbotManager.Settings.Enabled = false
-print(HttpService:JSONEncode(AimbotManager.Settings))
 
 
 Library:Notify("delta-hook welcomes you! good day "..Players.LocalPlayer.Name, nil, 4590657391)
@@ -33,6 +40,7 @@ local UIDS = {
 
 local Options = Library.Options
 local Toggles = Library.Toggles
+
 
 
 Library.ShowToggleFrameInKeybinds = true -- Make toggle keybinds work inside the keybinds UI (aka adds a toggle to the UI). Good for mobile users (Default value = true)
@@ -244,7 +252,7 @@ local wall_Check_tg = LeftGroupBox:AddToggle('wallchecktoggle', {
 
 --right
 
-local right_groupBox_combat = Tabs.Combat:AddRightGroupbox('Aimbot')
+local right_groupBox_combat = Tabs.Combat:AddRightGroupbox('FOV')
 local fov_enabled = right_groupBox_combat:AddToggle('fov_toggle',{
 
 	Text = 'FOV',
@@ -308,22 +316,403 @@ local color_picker_fov = color_label_fov:AddColorPicker('FOVCOLORPICKER',{
 
 local PlayerESPgroup = Tabs["Visual"]:AddLeftGroupbox("Player ESP")
 
-local esp_toggle = PlayerESPgroup:AddToggle('ESP_TOGGLE',{
+local ESP_TOGGLE = PlayerESPgroup:AddToggle('ESP_TOGGLE',{
 	Text = 'Enabled',
 	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
 
 	Default = false,
 
 	Callback = function(value)
-		-- EspManager:Toggle(value)
-		getgenv().ESP_LIB.Enabled = value
-		print(getgenv().ESP_LIB.Enabled)
+			ESP.Enabled = value
+
+		-- getgenv().esplib.box.enabled = value
+		-- print(HttpService:JSONEncode(getgenv().esplib))
+	end
+})
+
+local ESP_TOGGLE_BOXES = PlayerESPgroup:AddToggle('ESP_TOGGLE_BOXES',{
+	Text = 'Boxes',
+	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+	Default = false,
+
+	Callback = function(value)
+
+
+		ESP.ShowBox = value
+		-- getgenv().esplib.box.enabled = value
+		-- print(HttpService:JSONEncode(getgenv().esplib))
+	end
+}):AddColorPicker('BOX_COLOR_FILL', {
+	Default = Color3.new(1, 1, 1),
+	
+	Callback = function(Value, Transparency)
+		
+	end
+}):AddColorPicker('BOX_COLOR_OUTLINE', {
+	Default = Color3.new(0, 0, 0),
+	
+	Callback = function(Value, Transparency)
+		
+	end
+})
+
+local ESP_TOGGLE_HEALTHBAR = PlayerESPgroup:AddToggle('ESP_TOGGLE_HEALTHBAR',{
+	Text = 'Healthbar',
+	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+	Default = false,
+
+	Callback = function(value)
+		ESP.ShowHealth = value
+	end
+}):AddColorPicker('HEALTBAR_COLOR_FILL', {
+	Default = Color3.new(0, 1, 0),
+	
+	Callback = function(Value, Transparency)
+		
+	end
+}):AddColorPicker('HEALTHBAR_COLOR_OUTLINE', {
+	Default = Color3.new(0, 0, 0),
+	
+	Callback = function(Value, Transparency)
+		
+	end
+})
+
+local ESP_TOGGLE_NAME = PlayerESPgroup:AddToggle('ESP_TOGGLE_NAME',{
+	Text = 'Names',
+	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+	Default = false,
+
+	Callback = function(value)
+		ESP.ShowName = value
+	end
+}):AddColorPicker('NAME_FILL', {
+	Default = Color3.new(1, 1, 1),
+	
+	Callback = function(Value, Transparency)
+		
+	end
+})
+
+local ESP_TOGGLE_Distance = PlayerESPgroup:AddToggle('ESP_TOGGLE_distance',{
+	Text = 'distance',
+	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+	Default = false,
+
+	Callback = function(value)
+
+		ESP.ShowDistance = value
 	end
 })
 
 
 
 
+
+-- Library functions
+-- Sets the watermark visibility
+Library:SetWatermarkVisibility(true)
+
+-- Example of dynamically-updating watermark with common traits (fps and ping)
+local FrameTimer = tick()
+local FrameCounter = 0;
+local FPS = 60;
+local GetPing = (function() return math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue()) end)
+local CanDoPing = pcall(function() return GetPing(); end)
+
+local HttpService = game:GetService('HttpService')
+local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
+	FrameCounter += 1;
+
+	if (tick() - FrameTimer) >= 1 then
+		FPS = FrameCounter;
+		FrameTimer = tick();
+		FrameCounter = 0;
+	end;
+
+	if CanDoPing then
+		Library:SetWatermark(('delta-hook | '.._Vals._Ver..'-'.._Vals._Branch..' | '..'uid: '..tostring(UIDS[HWID])..' | '..'%d fps | %d ms'):format(
+			math.floor(FPS),
+			GetPing()
+		));
+	else
+		Library:SetWatermark(('delta-hook | '.._Vals._Ver..'-'.._Vals._Branch..' | '..'uid: '..tostring(UIDS[HWID])..' | '..'%d fps'):format(
+			math.floor(FPS)
+		));
+	end
+end);
+
+
+
+-- UI Settings
+local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+
+
+
+
+MenuGroup:AddDivider()
+MenuGroup:AddToggle("KeybindMenuOpen", { Default = Library.KeybindFrame.Visible, Text = "Open Keybind Menu", Callback = function(value) Library.KeybindFrame.Visible = value end})
+MenuGroup:AddToggle("TargetFrameOpen", { Default = Library.TargetFrame.Visible, Text = "Open Target Frame", Callback = function(value) Library.TargetFrame.Visible = value end})
+MenuGroup:AddToggle("ShowCustomCursor", {Text = "Custom Cursor", Default = true, Callback = function(Value) Library.ShowCustomCursor = Value end})
+MenuGroup:AddDivider()
+MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
+MenuGroup:AddButton("Unload", function() Library:Unload() end)
+
+
+-- for i,v in game.Players:GetPlayers() do
+-- 	local player = v
+-- 	local character = player.character
+
+-- 	if not ESP_TARGETS.PlayerE[player.Name] ~= nil and player.Name == game.Players.LocalPlayer.Name then
+-- 			local target_character = character
+
+-- 			if target_character ~= nil then
+-- 				ESP_TARGETS.PlayerE[player.Name] = character
+-- 				local human = character:FindFirstChildOfClass("Humanoid")
+
+-- 				task.spawn(function()
+-- 					-- esplib.add_box(character) -- Box
+-- 					-- esplib.add_healthbar(character)
+-- 					-- esplib.add_distance(character)
+-- 					-- esplib.add_tracer(character)
+-- 				end)
+
+-- 				human.Died:Connect(function()
+-- 					ESP_TARGETS.PlayerE[player.Name] = nil
+-- 				end)
+-- 			end
+-- 		end
+-- end
+
+-- game.Players.PlayerAdded:Connect(function(player)
+
+-- 	player.CharacterAdded:Connect(function(character)
+-- 		if not ESP_TARGETS.PlayerE[player.Name] ~= nil then
+-- 			local target_character = character
+-- 			task.delay(1, function()
+-- 				if target_character ~= nil and player.Name == game.Players.LocalPlayer.Name then
+
+-- 				player.CharacterAppearanceLoaded:Wait()
+
+-- 				ESP_TARGETS.PlayerE[player.Name] = character
+-- 				local human = character:FindFirstChildOfClass("Humanoid")
+
+-- 				task.spawn(function()
+-- 					-- esplib.add_box(character) -- Box
+-- 					-- esplib.add_healthbar(character)
+-- 					-- esplib.add_distance(character)
+-- 					-- esplib.add_tracer(character)
+-- 					-- esplib.add_name(character)
+-- 				end)
+
+-- 				human.Died:Connect(function()
+-- 					ESP_TARGETS.PlayerE[player.Name] = nil
+-- 					player.CharacterAdded:Wait()
+-- 					task.delay(1, function()
+-- 						if target_character ~= nil and player.Name == game.Players.LocalPlayer.Name then
+
+						
+
+-- 						ESP_TARGETS.PlayerE[player.Name] = character
+
+-- 						task.spawn(function()
+-- 							-- esplib.add_box(character) -- Box
+-- 							-- esplib.add_healthbar(character)
+-- 							-- esplib.add_distance(character)
+-- 							-- esplib.add_tracer(character)
+-- 							-- esplib.add_name(character)
+-- 						end)
+-- 						end
+-- 					end)
+					
+-- 				end)
+-- 			end
+-- 			end)
+			
+-- 		end
+-- 	end)
+	
+
+-- end)
+
+-- game.Players.PlayerRemoving:Connect(function(player, reason)
+-- 	if ESP_TARGETS[player.Name] ~= nil then ESP_TARGETS[player.Name] = nil end
+-- end)
+
+-- local ESP_TOGGLE_BOX = PlayerESPgroup:AddToggle('ESP_TOGGLE_BOX',{
+-- 	Text = 'Boxes',
+-- 	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+-- 	Default = false,
+
+-- 	Callback = function(value)
+-- 		getgenv().esplib.box.enabled = value
+-- 	end
+-- }):AddColorPicker('BOX_COLOR_FILL', {
+-- 	Default = Color3.new(1, 1, 1),
+	
+-- 	Callback = function(Value, Transparency)
+		
+-- 	end
+-- }):AddColorPicker('BOX_COLOR_OUTLINE', {
+-- 	Default = Color3.new(0, 0, 0),
+	
+-- 	Callback = function(Value, Transparency)
+		
+-- 	end
+-- })
+
+-- local ESP_TOGGLE_HEALTHBAR = PlayerESPgroup:AddToggle('ESP_TOGGLE_HEALTHBAR',{
+-- 	Text = 'Healthbar',
+-- 	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+-- 	Default = false,
+
+-- 	Callback = function(value)
+-- 		getgenv().esplib.healthbar.enabled = value
+-- 	end
+-- }):AddColorPicker('HEALTBAR_COLOR_FILL', {
+-- 	Default = Color3.new(0, 1, 0),
+	
+-- 	Callback = function(Value, Transparency)
+		
+-- 	end
+-- }):AddColorPicker('HEALTHBAR_COLOR_OUTLINE', {
+-- 	Default = Color3.new(0, 0, 0),
+	
+-- 	Callback = function(Value, Transparency)
+		
+-- 	end
+-- })
+
+-- local ESP_TOGGLE_NAME = PlayerESPgroup:AddToggle('ESP_TOGGLE_NAME',{
+-- 	Text = 'Names',
+-- 	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+-- 	Default = false,
+
+-- 	Callback = function(value)
+-- 		getgenv().esplib.name.enabled = value
+-- 	end
+-- }):AddColorPicker('NAME_FILL', {
+-- 	Default = Color3.new(1, 1, 1),
+	
+-- 	Callback = function(Value, Transparency)
+		
+-- 	end
+-- })
+
+-- local ESP_TOGGLE_Distance = PlayerESPgroup:AddToggle('ESP_TOGGLE_distance',{
+-- 	Text = 'distance',
+-- 	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+-- 	Default = false,
+
+-- 	Callback = function(value)
+-- 		getgenv().esplib.distance.enabled = value
+-- 	end
+-- }):AddColorPicker('distance_COLOR_FILL', {
+-- 	Default = Color3.new(1, 1, 1),
+	
+-- 	Callback = function(Value, Transparency)
+		
+-- 	end
+-- })
+
+
+-- local ESP_TOGGLE_TRACER = PlayerESPgroup:AddToggle('ESP_TOGGLE_TRACER',{
+-- 	Text = 'Tracers',
+-- 	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+-- 	Default = false,
+
+-- 	Callback = function(value)
+-- 		getgenv().esplib.tracer.enabled = value
+-- 	end
+-- }):AddColorPicker('TRACER_COLOR_FILL', {
+-- 	Default = Color3.new(1, 1, 1),
+	
+-- 	Callback = function(Value, Transparency)
+		
+-- 	end
+-- }):AddColorPicker('HEALTHBAR_COLOR_OUTLINE', {
+-- 	Default = Color3.new(0, 0, 0),
+	
+-- 	Callback = function(Value, Transparency)
+		
+-- 	end
+-- })
+
+local visual_connection = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
+	AimbotManager.FOVSettings .Color  = Options.FOVCOLORPICKER.Value
+	AimbotManager.FOVSettings .LockedColor  = Options.FOVCOLORPICKER.Value
+
+	-- box
+
+	-- esplib.name.fill = Options.NAME_FILL.Value
+
+	-- distance
+
+	
+
+	-- esplib.distance.fill = Options.distance_COLOR_FILL.Value
+
+	-- tracers
+	-- esplib.tracer.fill = Options.TRACER_COLOR_FILL.Value
+	-- esplib.tracer.outline = Options.TRACER_COLOR_OUTLINE.Value
+
+end)
+
+Library:OnUnload(function() 
+	WatermarkConnection:Disconnect()
+    visual_connection:Disconnect()
+
+	print('delta-hook unloaded')
+	Library.Unloaded = true
+end)
+
+Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
+
+-- Addons:
+-- SaveManager (Allows you to have a configuration system)
+-- ThemeManager (Allows you to have a menu theme system)
+
+-- Hand the library over to our managers
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+-- Ignore keys that are used by ThemeManager.
+-- (we dont want configs to save themes, do we?)
+SaveManager:IgnoreThemeSettings()
+
+-- Adds our MenuKeybind to the ignore list
+-- (do you want each config to have a different menu key? probably not.)
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+
+-- use case for doing it this way:
+-- a script hub could have themes in a global folder
+-- and game configs in a separate folder per game
+ThemeManager:SetFolder('delta-hook')
+SaveManager:SetFolder('delta-hook/'..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+-- SaveManager:SetSubFolder('specific-place') -- if the game has multiple places inside of it (for example: DOORS) 
+					   -- you can use this to save configs for those places separately
+					   -- The path in this script would be: MyScriptHub/specific-game/settings/specific-place
+					   -- [ This is optional ]
+
+-- Builds our config menu on the right side of our tab
+SaveManager:BuildConfigSection(Tabs['UI Settings'])
+
+-- Builds our theme menu (with plenty of built in themes) on the left side
+-- NOTE: you can also call ThemeManager:ApplyToGroupbox to add it to a specific groupbox
+ThemeManager:ApplyToTab(Tabs['UI Settings'])
+
+-- You can use the SaveManager:LoadAutoloadConfig() to load a config
+-- which has been marked to be one that auto loads!
+SaveManager:LoadAutoloadConfig()
 
 -- We can also get our Main tab via the following code:
 -- local LeftGroupBox = Window.Tabs.Combat:AddLeftGroupbox('Groupbox')
@@ -930,106 +1319,3 @@ local Tab2 = TabBox:AddTab('Tab 2')
 -- SecretDepbox:SetupDependencies({
 -- 	{ Options.DepboxDropdown, 'ĉ'} -- In the case of dropdowns, it will automatically check if the specified dropdown value is selected
 -- })
-
--- Library functions
--- Sets the watermark visibility
-Library:SetWatermarkVisibility(true)
-
--- Example of dynamically-updating watermark with common traits (fps and ping)
-local FrameTimer = tick()
-local FrameCounter = 0;
-local FPS = 60;
-local GetPing = (function() return math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue()) end)
-local CanDoPing = pcall(function() return GetPing(); end)
-
-local HttpService = game:GetService('HttpService')
-local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
-	FrameCounter += 1;
-
-	if (tick() - FrameTimer) >= 1 then
-		FPS = FrameCounter;
-		FrameTimer = tick();
-		FrameCounter = 0;
-	end;
-
-	if CanDoPing then
-		Library:SetWatermark(('delta-hook | '.._Vals._Ver..'-'.._Vals._Branch..' | '..'uid: '..tostring(UIDS[HWID])..' | '..'%d fps | %d ms'):format(
-			math.floor(FPS),
-			GetPing()
-		));
-	else
-		Library:SetWatermark(('delta-hook | '.._Vals._Ver..'-'.._Vals._Branch..' | '..'uid: '..tostring(UIDS[HWID])..' | '..'%d fps'):format(
-			math.floor(FPS)
-		));
-	end
-end);
-
-
-
--- UI Settings
-local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
-
-
-
-
-MenuGroup:AddDivider()
-MenuGroup:AddToggle("KeybindMenuOpen", { Default = Library.KeybindFrame.Visible, Text = "Open Keybind Menu", Callback = function(value) Library.KeybindFrame.Visible = value end})
-MenuGroup:AddToggle("TargetFrameOpen", { Default = Library.TargetFrame.Visible, Text = "Open Target Frame", Callback = function(value) Library.TargetFrame.Visible = value end})
-MenuGroup:AddToggle("ShowCustomCursor", {Text = "Custom Cursor", Default = true, Callback = function(Value) Library.ShowCustomCursor = Value end})
-MenuGroup:AddDivider()
-MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
-MenuGroup:AddButton("Unload", function() Library:Unload() end)
-
-
-local visual_connection = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
-	AimbotManager.FOVSettings .Color  = Options.FOVCOLORPICKER.Value
-	AimbotManager.FOVSettings .LockedColor  = Options.FOVCOLORPICKER.Value
-end)
-
-Library:OnUnload(function() 
-	WatermarkConnection:Disconnect()
-    visual_connection:Disconnect()
-
-	print('delta-hook unloaded')
-	Library.Unloaded = true
-end)
-
-Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
-
--- Addons:
--- SaveManager (Allows you to have a configuration system)
--- ThemeManager (Allows you to have a menu theme system)
-
--- Hand the library over to our managers
-ThemeManager:SetLibrary(Library)
-SaveManager:SetLibrary(Library)
-
--- Ignore keys that are used by ThemeManager.
--- (we dont want configs to save themes, do we?)
-SaveManager:IgnoreThemeSettings()
-
--- Adds our MenuKeybind to the ignore list
--- (do you want each config to have a different menu key? probably not.)
-SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
-
--- use case for doing it this way:
--- a script hub could have themes in a global folder
--- and game configs in a separate folder per game
-ThemeManager:SetFolder('delta-hook')
-SaveManager:SetFolder('delta-hook/'..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
--- SaveManager:SetSubFolder('specific-place') -- if the game has multiple places inside of it (for example: DOORS) 
-					   -- you can use this to save configs for those places separately
-					   -- The path in this script would be: MyScriptHub/specific-game/settings/specific-place
-					   -- [ This is optional ]
-
--- Builds our config menu on the right side of our tab
-SaveManager:BuildConfigSection(Tabs['UI Settings'])
-
--- Builds our theme menu (with plenty of built in themes) on the left side
--- NOTE: you can also call ThemeManager:ApplyToGroupbox to add it to a specific groupbox
-ThemeManager:ApplyToTab(Tabs['UI Settings'])
-
--- You can use the SaveManager:LoadAutoloadConfig() to load a config
--- which has been marked to be one that auto loads!
-SaveManager:LoadAutoloadConfig()
-
