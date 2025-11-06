@@ -1,11 +1,175 @@
 function color3torgb(color3)
     return color3.R*255,color3.G*255,color3.B*255
 end
+
+
+
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 -- New example script written by wally
 -- You can suggest changes with a pull request or something
 
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local Active_ITEMESP = false
+local RenderDistance = 200
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "aiiugDUgufnugnfushnusxuhguziguznuag"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+ScreenGui.Parent = CoreGui
+
+local OriginalAmmoTypes = {}
+
+for i,v in next, game:GetService("ReplicatedStorage").AmmoTypes:GetChildren() do
+    OriginalAmmoTypes[v.Name] = v:GetAttributes()
+end
+
+local ValueCache = {
+	["6B45"] = 16,
+	["AS Val"] = 16,
+	["ATC Key"] = 4,
+	["Airfield Key"] = 6,
+	["Altyn"] = 16,
+	["Altyn Visor"] = 8,
+	["Attak-5 60L"] = 16,
+	["Bolts"] = 1,
+	["Crane Key"] = 6,
+	["DAGR"] = 8,
+	["Duct Tape"] = 1,
+	["Fast MT"] = 10,
+	["Flare Gun"] = 8,
+	["Fueling Station Key"] = 4,
+	["Garage Key"] = 4,
+	["Hammer"] = 1,
+	["JPC"] = 10,
+	["Lighthouse Key"] = 6,
+	["M4A1"] = 12,
+	["Nails"] = 1,
+	["Nuts"] = 1,
+	["Saiga 12"] = 8,
+	["Super Glue"] = 1,
+	["Village Key"] = 4,
+	["Wrench"] = 1
+}
+
+
+
+local ValueSettings = {
+	[0] = Color3.fromRGB(255, 255, 255),
+	[4] = Color3.fromRGB(76, 187, 23),
+	[8] = Color3.fromRGB(218, 112, 214),
+	[16] = Color3.fromRGB(233, 116, 81),
+	[32] = Color3.fromRGB(255, 36, 0)
+}
+
+local Camera = Workspace.CurrentCamera
+local Containers = Workspace:WaitForChild("Containers")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character
+
+while true do
+	if LocalPlayer.Character then
+		Character = LocalPlayer.Character; break
+	end
+	RunService.RenderStepped:Wait()
+end
+
+local function Draw(Container)
+	local Drawing = Drawing.new("Text")
+	Drawing.Center = true
+	Drawing.Font = 2
+	Drawing.Outline = true
+	Drawing.Size = 14
+
+	local Connection;
+	Connection = RunService.RenderStepped:Connect(function()
+		if not Active_ITEMESP then
+			Drawing.Visible = false; return
+		end
+
+		if not Container.PrimaryPart then
+			Drawing.Visible = false; return
+		end
+
+		if LocalPlayer.Character ~= Character then
+			Character = LocalPlayer.Character; return
+		end
+
+		if not Character:FindFirstChild("HumanoidRootPart") then
+			Drawing.Visible = false; return
+		end
+
+		local Distance = (Container.PrimaryPart.Position - Character.HumanoidRootPart.Position).Magnitude
+		if Distance > RenderDistance then
+			Drawing.Visible = false; return
+		end
+
+		local Position, Visible = Camera:WorldToViewportPoint(Container.PrimaryPart.Position)
+		if not Visible then
+			Drawing.Visible = false; return
+		end
+
+		local Amount;
+		local ItemName;
+		local NextSpawn = (Container:GetAttribute("NextSpawn") or 0) - os.time()
+		local TotalPrice = 0
+		local Value = 0
+
+		local Color;
+		local Highest = -1
+		local Loot = ""
+
+
+
+		for i,v in pairs(Container.Inventory:GetChildren()) do
+            local ITMM = game.ReplicatedStorage.ItemsList[v.Name]
+
+            if ITMM then
+
+                
+
+                Loot = Loot..ITMM.ItemProperties:GetAttribute("ItemName").. " | "
+
+                
+
+                -- print(HttpService:JSONEncode(ITMM.ItemProperties:GetAttributes()))
+            end
+        end
+
+		for i, v in pairs(ValueSettings) do
+			if Value >= i and i > Highest then
+				Color = v
+				Highest = i
+			end
+		end
+
+ 
+
+		Drawing.Color = Color
+        Drawing.RichText = true
+		Drawing.Position = Vector2.new(Position.X, Position.Y)
+		Drawing.Text = Container:GetAttribute("DisplayName").."\n"..tostring(NextSpawn).."\n"..tostring(Loot)
+		Drawing.ZIndex = Value
+		Drawing.Visible = true
+	end)
+end
+
+
+
+for _, v in pairs(Containers:GetDescendants()) do
+	if v:IsA("Model") then
+		Draw(v)
+	end
+end
+
+Containers.ChildAdded:Connect(Draw)
 
 
 local repo = 'https://raw.githubusercontent.com/maskaradRBXdevelopment/lib/main/'
@@ -14,7 +178,7 @@ local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local AimbotManager = loadstring(game:HttpGet(repo .. 'addons/AimbotModule.lua'))()
-local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaster2/esp-library/main/library.lua"))();
+local ESP = loadstring(game:HttpGet("https://pastebin.com/raw/8xpHxJsc"))();
 
 local ESP_TARGETS = {
 	PlayerE = {
@@ -99,6 +263,7 @@ local Tabs = {
 	-- Creates a new tab titled Main
 	Combat = Window:AddTab('Combat'),
 	['Visual'] = Window:AddTab('👁️ | Visual'),
+	GunMods = Window:AddTab('Gun mods'),
 	['UI Settings'] = Window:AddTab('⚙️ | Setting'),
 }
 
@@ -366,14 +531,8 @@ local ESP_TOGGLE_HEALTHBAR = PlayerESPgroup:AddToggle('ESP_TOGGLE_HEALTHBAR',{
 	Callback = function(value)
 		ESP.ShowHealth = value
 	end
-}):AddColorPicker('HEALTBAR_COLOR_FILL', {
-	Default = Color3.new(0, 1, 0),
-	
-	Callback = function(Value, Transparency)
-		
-	end
 }):AddColorPicker('HEALTHBAR_COLOR_OUTLINE', {
-	Default = Color3.new(0, 0, 0),
+	Default = Color3.new(1, 1, 1),
 	
 	Callback = function(Value, Transparency)
 		
@@ -407,10 +566,150 @@ local ESP_TOGGLE_Distance = PlayerESPgroup:AddToggle('ESP_TOGGLE_distance',{
 
 		ESP.ShowDistance = value
 	end
+}):AddColorPicker('DISTANCE_FILL', {
+	Default = Color3.new(1, 1, 1),
+	
+	Callback = function(Value, Transparency)
+		
+	end
 })
 
 
+PlayerESPgroup:AddDivider()
 
+
+local ESP_TRACER_TOGGLE = PlayerESPgroup:AddToggle('ESP_TRACER_TOGGLE',{
+	Text = 'Tracer',
+	Tooltip = 'self explain (Братанчик только фрики не шарят че это)',
+
+	Default = false,
+
+	Callback = function(value)
+
+		ESP.ShowTracer = value
+	end
+}):AddColorPicker('TRACER_FILL', {
+	Default = Color3.new(1, 1, 1),
+	
+	Callback = function(Value, Transparency)
+		
+	end
+})
+local TRACER_THICKNESS = PlayerESPgroup:AddSlider("TRACER_THICKNESS", {
+		Text = "Thickness",
+		Default = 1,
+		Min = 1,
+		Max = 10,
+		Rounding = 1,
+	})
+
+Options.TRACER_THICKNESS:OnChanged(function(val)
+	ESP.TracerThickness = val
+end)
+
+local RightStorageESP = Tabs.Visual:AddRightGroupbox("Storage ESP")
+local toggleSTesp = RightStorageESP:AddToggle('EnablEEe', {
+	Text = 'Enable',
+	Tooltip = 'haram looting',
+
+	Default = false,
+
+	Callback = function(value)
+
+		Active_ITEMESP = value
+	end
+})
+
+local slider_dist = RightStorageESP:AddSlider('StorageESPE', {
+	Text = 'distance',
+	Default = 200,
+	Min = 0,
+	Max = 500,
+	Rounding = 1,
+	Compact = false,
+
+	Callback = function()
+		
+	end
+})
+
+Options.StorageESPE:OnChanged(function(vall)
+	RenderDistance = vall
+end)
+
+--
+do
+	local left_mod_page = Tabs.GunMods:AddLeftGroupbox('Gun Modifications')
+
+	local no_recoil = left_mod_page:AddToggle('NoRecoil',{
+			Text = 'No Recoil',
+			Tooltip = 's1mple',
+
+			Default = false,
+
+			Callback = function(value)
+				if value == true then
+					for i,v in next, game:GetService("ReplicatedStorage").AmmoTypes:GetChildren() do
+                    	if v:GetAttribute("RecoilStrength") then
+                   			v:SetAttribute("RecoilStrength", 0)
+                    	end
+                    end
+				else
+					for i,v in next, game:GetService("ReplicatedStorage").AmmoTypes:GetChildren() do
+                    	if v:GetAttribute("RecoilStrength") then
+                   			v:SetAttribute("RecoilStrength", OriginalAmmoTypes[v.Name].RecoilStrength)
+                    	end
+                    end
+				end
+			end
+	})
+
+		local no_drag = left_mod_page:AddToggle('NoDrag',{
+			Text = 'No Drag',
+			Tooltip = 'ZyWoo',
+
+			Default = false,
+
+			Callback = function(value)
+				if value == true then
+					for i,v in next, game:GetService("ReplicatedStorage").AmmoTypes:GetChildren() do
+                    	if v:GetAttribute("Drag") then
+                   			v:SetAttribute("Drag", 0)
+                    	end
+                    end
+				else
+					for i,v in next, game:GetService("ReplicatedStorage").AmmoTypes:GetChildren() do
+                    	if v:GetAttribute("Drag") then
+                   			v:SetAttribute("Drag", OriginalAmmoTypes[v.Name].Drag)
+                    	end
+                    end
+				end
+			end
+	})
+
+	local no_drop = left_mod_page:AddToggle('NoDrop',{
+			Text = 'No Drop',
+			Tooltip = 'donk!',
+
+			Default = false,
+
+			Callback = function(value)
+				if value == true then
+					for i,v in next, game:GetService("ReplicatedStorage").AmmoTypes:GetChildren() do
+                    	if v:GetAttribute("ProjectileDrop") then
+                   			v:SetAttribute("ProjectileDrop", 0)
+                    	end
+                    end
+				else
+					for i,v in next, game:GetService("ReplicatedStorage").AmmoTypes:GetChildren() do
+                    	if v:GetAttribute("ProjectileDrop") then
+                   			v:SetAttribute("ProjectileDrop", OriginalAmmoTypes[v.Name].ProjectileDrop)
+                    	end
+                    end
+				end
+			end
+	})
+end
 
 
 -- Library functions
@@ -655,6 +954,15 @@ local visual_connection = game:GetService("RunService").RenderStepped:Connect(fu
 
 	-- esplib.name.fill = Options.NAME_FILL.Value
 
+
+	ESP.BoxColor = Options.BOX_COLOR_FILL.Value
+	ESP.BoxOutlineColor = Options.BOX_COLOR_OUTLINE.Value
+
+	ESP.HealthOutlineColor = Options.HEALTHBAR_COLOR_OUTLINE.Value
+
+	ESP.NameColor = Options.NAME_FILL.Value
+
+	ESP.TracerColor = Options.TRACER_FILL.Value
 	-- distance
 
 	
